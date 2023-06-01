@@ -1,0 +1,23 @@
+[   0.376] Command line: python main.py
+[   0.376] log file at result/1/log/test.log
+[   0.376] 
+[   0.376] dataset_root: /data/ssd/qluo/benchmark
+[   0.376] dataset: mlcad2023
+[   0.376] design_name: Design_105
+[   0.376] custom_path: 
+[   0.376] run_all: False
+[   0.376] log_freq: 100
+[   0.376] result_dir: result
+[   0.376] exp_id: 1
+[   0.376] log_dir: log
+[   0.376] log_name: test.log
+[   0.376] eval_dir: eval
+[   0.376] random_place: False
+[   0.376] 
+[   0.377] =================
+[   0.377] Start place mlcad2023/Design_105
+[   0.378] loading from original benchmark...
+[   0.378] loading cell library
+[   0.381] Number of cells in the library:13
+[   0.381] loading netlist
+[   6.054] Number of nodes:690935
