@@ -367,15 +367,73 @@ class Dataset:
     def RandomCordGenerate(self, logger):
         logger.info("random generated macro placement results")
         restype_loc = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
+        
         for id in range(len(self.sites)):
             for j in range(len(list(self.sites[id].resource_supply.keys()))):
                 res_name = list(self.sites[id].resource_supply.keys())[j]
                 restype_loc[res_name].append(id)
         
+        # Place cascade macro as first
+        for id in range(len(self.cascademacros)):
+            macro = self.cascademacros[id]
+            nodecol = macro.Macronodecol
+            macrolength = len(nodecol)
+            reference_node = nodecol[0]
+            
+            flag = False
+            while not flag:
+                uram_cnt = 0
+                candidate = restype_loc[reference_node.resourcetype]
+                place_site_id = choice(candidate)
+                X_ref = self.sites[place_site_id].locX
+                Y_ref = self.sites[place_site_id].locY
+                if place_site_id+macrolength>=len(self.sites):
+                    candidate.remove(place_site_id)
+                else:
+                    subflag = True
+                    for j in range(1, macrolength):
+                        if reference_node.resourcetype == "URAM288":
+                            immed_site_id = place_site_id+uram_cnt
+                            if j % 4 == 0:
+                                uram_cnt += 1
+                        else:
+                            immed_site_id = place_site_id+j
+                        X_immed = self.sites[immed_site_id].locX
+                        if self.sites[immed_site_id].CheckIsFull(reference_node.resourcetype):
+                            subflag = False
+                            break
+                        if X_immed != X_ref:
+                            subflag = False
+                            break
+                    
+
+                    if subflag:
+                        uram_cnt = 0
+                        for j in range(0, macrolength):
+                            nodeid = nodecol[j].id
+                            if reference_node.resourcetype == "URAM288":
+                                immed_site_id = place_site_id+uram_cnt
+                                if j % 4 == 0:
+                                    uram_cnt += 1
+                            else:
+                                immed_site_id = place_site_id+j
+                            immed_site_X = self.sites[immed_site_id].locX
+                            immed_site_Y = self.sites[immed_site_id].locY
+                            self.nodes[nodeid].SetPlaceLocation(immed_site_X, immed_site_Y, immed_site_id)
+                            self.cascademacros[id].Macronodecol[j].SetPlaceLocation(immed_site_X, immed_site_Y, immed_site_id)
+                            self.sites[immed_site_id].addNode(self.nodes[nodeid])
+                            if immed_site_id in restype_loc[reference_node.resourcetype]:
+                                restype_loc[reference_node.resourcetype].remove(immed_site_id)
+                    else:
+                        candidate.remove(place_site_id)
+
+                    flag = subflag                                                       
+
+        # Nonmacrocascade nodes  
         for id in range(len(self.nodes)):
             node = self.nodes[id]
             if node.is_macro:
-                if node.cascade_id == -1 or node.is_cascade_refer:
+                if node.cascade_id == -1:
                     flag = False
                     while not flag:
                         candidate = restype_loc[node.resourcetype]
@@ -387,29 +445,6 @@ class Dataset:
                             self.sites[place_site_id].addNode(self.nodes[id])
                             restype_loc[node.resourcetype].remove(place_site_id)
                             flag = True
-        
-                    if node.is_cascade_refer:
-                        uram_cnt = 1
-                        locX_refer = node.locX
-                        locY_refer = node.locY
-                        site_id = self.sitemaps[locX_refer][locY_refer].astype("int")
-                        cascade_id = node.cascade_id
-                        macro_inst = self.cascademacros[cascade_id]
-                        for subid in range(1,len(macro_inst.Macronodecol)):
-                            nodeid = macro_inst.Macronodecol[subid].id
-                            if self.nodes[nodeid].resourcetype == "URAM288":
-                                new_site_id = site_id + uram_cnt
-                                if subid % 4 == 0:
-                                    uram_cnt += 1
-                            else:
-                                new_site_id = site_id + subid
-                            new_site_locX = self.sites[new_site_id].locX
-                            new_site_locY = self.sites[new_site_id].locY
-                            self.nodes[nodeid].SetPlaceLocation(new_site_locX, new_site_locY, new_site_id)
-                            self.cascademacros[cascade_id].Macronodecol[subid].SetPlaceLocation(new_site_locX, new_site_locY, new_site_id)
-                            self.sites[new_site_id].addNode(self.nodes[nodeid])
-                            if new_site_id in restype_loc[self.nodes[nodeid].resourcetype]:
-                                restype_loc[self.nodes[nodeid].resourcetype].remove(new_site_id)                    
 
     def OutputSolutionpl(self, output_path):
         with open(output_path, "w") as f_sol:
@@ -461,7 +496,7 @@ class Dataset:
             macro_node_id_col = []
             for j in range(len(macro_node_col)):
                 macro_node_id_col.append(macro_node_col[j].id)
-            uram_cnt = 1
+            uram_cnt = 0
             ref_node = self.nodes[macro_node_id_col[0]]
             site_id = ref_node.site
             for j in range(0,len(macro_node_id_col)):

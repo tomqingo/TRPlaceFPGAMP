@@ -8,7 +8,7 @@ def get_option():
     parser = argparse.ArgumentParser("Cumple")
     parser.add_argument("--dataset_root", type=str, default="/data/ssd/qluo/benchmark", help="the parent folder of dataset")
     parser.add_argument("--dataset", type=str, default="mlcad2023", help="dataset name")
-    parser.add_argument("--design_name", type=str, default="Design_105", help="design name")
+    parser.add_argument("--design_name", type=str, default="Design_208", help="design name")
     parser.add_argument("--custom_path", type=str, default="", help="custom design path, set it astoken1:path1,token2:path2 e.g. nodes:data/test.nodes,nets:data/test.nets,design_name:mydesign,benchmark:mybenchmark")
     parser.add_argument('--run_all', type=str2bool, default=False, help='If True, run all designs in the given dataset. If False, run the given design only.')
     
@@ -19,7 +19,7 @@ def get_option():
     parser.add_argument("--log_name", type=str, default="test.log", help="log file name") 
     parser.add_argument("--eval_dir", type=str, default="eval", help="visualization directory")
 
-    parser.add_argument('--random_place', type=str2bool, default=False, help='If True, randomly place macros, or place them according to sample.pl.')
+    parser.add_argument('--random_place', type=str2bool, default=True, help='If True, randomly place macros, or place them according to sample.pl.')
 
     args = parser.parse_args()
 

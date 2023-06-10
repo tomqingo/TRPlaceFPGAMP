@@ -20,6 +20,7 @@ class CascadeMacro:
         self.height = height
         self.Macronodecol = []
         self.Nonmacronodecol = []
+        self.reference_node = -1
     
     def addNode(self, node, is_macro):
         if is_macro:
