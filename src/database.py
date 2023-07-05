@@ -63,7 +63,7 @@ class Dataset:
                         continue
                     new_node = Node(new_node_info[0], cell_id, new_node_info[1])
                     if new_node_info[1] in list(self.cellLib.keys()):
-                        new_node.AddPins(self.cellLib[new_node_info[1]].pins)
+                        new_node.addPin(self.cellLib[new_node_info[1]].pins)
                     self.nodes.append(new_node)
                     self.nodeNameIdMap[new_node_info[0]] = cell_id
                     cell_id = cell_id + 1    
@@ -98,6 +98,14 @@ class Dataset:
                             nodeid = self.nodeNameIdMap[nodename]
                             celltype = self.nodes[nodeid].celltype
                             if celltype in list(self.cellLib.keys()):
+                                if not pinname in list(self.cellLib[celltype].pinNameIdMap):
+                                    #self.cellLib[celltype].pinNameIdMap[pinname] = len(self.cellLib[celltype].pins)
+                                    if "IN" in pinname:
+                                        pin_IO = 1
+                                    else:
+                                        pin_IO = 0
+                                    self.cellLib[celltype].addPin(pinname, pin_IO, False, False)
+                                    self.nodes[nodeid].addPin([self.cellLib[celltype].pins[-1]])
                                 pinId = self.cellLib[celltype].pinNameIdMap[pinname]
                                 pin = self.cellLib[celltype].pins[pinId]
                                 new_net.addPin([nodeid, pin])
@@ -192,9 +200,6 @@ class Dataset:
                             cur_line_col = cur_line.strip().split()
                             if cur_line_col[0] == "END" and cur_line_col[1] == "SITEMAP":
                                 break
-                            if cur_line_col[2] == "URAM":
-                                for iter in range(3):
-                                    id = id + 1
                             new_site = Site(cur_line_col[2], site_id, int(cur_line_col[0]), int(cur_line_col[1]))
                             sitetype_id = self.sitetypeIdMap[cur_line_col[2]].id
                             new_site.addSupplyResource(self.sitetypes[sitetype_id].resourcecap)
@@ -263,8 +268,18 @@ class Dataset:
                     id = id + 1
                     if len(cur_line_col) == 0:
                         continue
+                    macroinst = None
+                    macroinst_sub = None
                     if cur_line_col[0].upper() in list(self.macrotypeIdMap.keys()):
-                        macroinst = CascadeMacro(cur_line_col[3], macroinst_id, cur_line_col[0].upper(), int(cur_line_col[1]), int(cur_line_col[2]))
+                        # For the macro URAM, you have to split it into two cascaded macros
+                        if "URAM_CASCADE_8x2" in cur_line_col[3]:
+                            macroinst = CascadeMacro(cur_line_col[3], macroinst_id, cur_line_col[0].upper(), int(cur_line_col[1]), int(cur_line_col[2])/2)
+                            macroinst_id = macroinst_id + 1
+                            macro_name = cur_line_col[3] + "/URAM_cascade_sub_instance"
+                            macroinst_sub = CascadeMacro(macro_name, macroinst_id, cur_line_col[0].upper(), int(cur_line_col[1]), int(cur_line_col[2])/2)
+                        else:
+                            macroinst = CascadeMacro(cur_line_col[3], macroinst_id, cur_line_col[0].upper(), int(cur_line_col[1]), int(cur_line_col[2]))
+
                         id = id + 1
                         sub_cur_line = all_lines[id]
                         sub_cur_line_col = sub_cur_line.strip().split()
@@ -274,12 +289,24 @@ class Dataset:
                         id = id + 1
                         for subid in range(len(self.nodes)):
                             if cur_line_col[3] in self.nodes[subid].name:
-                                self.nodes[subid].cascade_id = macroinst_id
-                                if self.nodes[subid].celltype == self.macrotypes[self.macrotypeIdMap[macroinst.macrotype]].celltype:
-                                    macroinst.addNode(self.nodes[subid], is_macro=True)
+                                if "URAM_cascade_sub_instance" in self.nodes[subid].name:
+                                    self.nodes[subid].cascade_id = macroinst_sub.id
+                                    if self.nodes[subid].celltype == self.macrotypes[self.macrotypeIdMap[macroinst_sub.macrotype]].celltype:
+                                        macroinst_sub.addNode(self.nodes[subid], is_macro=True)
+                                    else:
+                                        macroinst_sub.addNode(self.nodes[subid], is_macro=False)
+                                    if "URAM288_inst9" in self.nodes[subid].name:
+                                        self.nodes[subid].is_cascade_refer = True
+                                        macroinst_sub.SetReferenceNode(self.nodes[subid].id)
                                 else:
-                                    macroinst.addNode(self.nodes[subid], is_macro=False)
+                                    self.nodes[subid].cascade_id = macroinst.id
+                                    if self.nodes[subid].celltype == self.macrotypes[self.macrotypeIdMap[macroinst.macrotype]].celltype:
+                                        macroinst.addNode(self.nodes[subid], is_macro=True)
+                                    else:
+                                        macroinst.addNode(self.nodes[subid], is_macro=False)
                         self.cascademacros.append(macroinst)
+                        if "URAM_CASCADE_8x2" in cur_line_col[3]:
+                            self.cascademacros.append(macroinst_sub)
                         macroinst_id = macroinst_id + 1
                     else:
                         continue
@@ -341,7 +368,7 @@ class Dataset:
                 #For other cells in the cascaded macro
                 for id in range(len(self.nodes)):
                     if self.nodes[id].is_cascade_refer:
-                        uram_cnt = 1 #use for uram_cascade
+                        uram_cnt = 0 #use for uram_cascade
                         locX_refer = self.nodes[id].locX
                         locY_refer = self.nodes[id].locY
                         site_id = self.sitemaps[locX_refer][locY_refer].astype("int")
@@ -350,9 +377,9 @@ class Dataset:
                         for subid in range(1,len(macro_inst.Macronodecol)):
                             nodeid = macro_inst.Macronodecol[subid].id
                             if self.nodes[nodeid].resourcetype == "URAM288":
-                                new_site_id = site_id + uram_cnt
                                 if subid % 4 == 0:
                                     uram_cnt += 1
+                                new_site_id = site_id + uram_cnt
                             else:
                                 new_site_id = site_id + subid
                             new_site_locX = self.sites[new_site_id].locX
@@ -371,9 +398,10 @@ class Dataset:
         for id in range(len(self.sites)):
             for j in range(len(list(self.sites[id].resource_supply.keys()))):
                 res_name = list(self.sites[id].resource_supply.keys())[j]
-                restype_loc[res_name].append(id)
+                if self.sites[id].resource_supply[res_name] > 0:
+                    restype_loc[res_name].append(id)
         
-        # Place cascade macro as first
+        # Place cascade macro at first
         for id in range(len(self.cascademacros)):
             macro = self.cascademacros[id]
             nodecol = macro.Macronodecol
@@ -432,20 +460,236 @@ class Dataset:
         # Nonmacrocascade nodes  
         for id in range(len(self.nodes)):
             node = self.nodes[id]
-            if node.is_macro:
-                if node.cascade_id == -1:
-                    flag = False
-                    while not flag:
-                        candidate = restype_loc[node.resourcetype]
-                        place_site_id = choice(candidate)
-                        if not self.sites[place_site_id].CheckIsFull(node.resourcetype):
-                            locX = self.sites[place_site_id].locX
-                            locY = self.sites[place_site_id].locY
-                            self.nodes[id].SetPlaceLocation(locX,locY,place_site_id)
-                            self.sites[place_site_id].addNode(self.nodes[id])
-                            restype_loc[node.resourcetype].remove(place_site_id)
-                            flag = True
+            if node.is_macro and node.cascade_id == -1:
+                flag = False
+                while not flag:
+                    candidate = restype_loc[node.resourcetype]
+                    place_site_id = choice(candidate)
+                    if not self.sites[place_site_id].CheckIsFull(node.resourcetype):
+                        locX = self.sites[place_site_id].locX
+                        locY = self.sites[place_site_id].locY
+                        self.nodes[id].SetPlaceLocation(locX,locY,place_site_id)
+                        self.sites[place_site_id].addNode(self.nodes[id])
+                        restype_loc[node.resourcetype].remove(place_site_id)
+                        flag = True
 
+    def RandomAugment(self, displacement_thres, augment_numper_thres, label_small_range, logger):
+        num_macro_adjust_thres = int(self.num_macro*augment_numper_thres)
+        if label_small_range:
+            num_macro_adjust = choice(list(range(4, num_macro_adjust_thres)))
+        else:
+            num_macro_adjust = choice(list(range(num_macro_adjust_thres, self.num_macro)))
+        num_cascade_macro_adjust = choice(list(range(0, min(int(num_macro_adjust*0.3), self.num_cascade_macro))))
+        # The site and site column col to place the macros
+        restype_loc = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
+        restype_col = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
+        col2loc = {}
+        for id in range(len(self.sites)):
+            col_id = self.sites[id].locX
+            if not col_id in col2loc:
+                col2loc[col_id] = [id]
+            else:
+                col2loc[col_id].append(id)
+            for j in range(len(list(self.sites[id].resource_supply.keys()))):
+                res_name = list(self.sites[id].resource_supply.keys())[j]
+                if self.sites[id].resource_supply[res_name] > 0:
+                    restype_loc[res_name].append(id)
+                    if not col_id in restype_col[res_name]:
+                        restype_col[res_name].append(col_id)
+        #print(restype_loc)
+        #print(restype_col)
+        # temporally clear the uncascaded macro on the sites
+        for id in range(len(self.sites)):
+            site_current = self.sites[id]
+            nodecol = site_current.nodecol
+            for nodeid in nodecol:
+                if self.nodes[nodeid].cascade_id == -1:
+                    self.sites[id].removeNode(self.nodes[nodeid])
+
+        # choose the cascaded macros to be replaced in a range
+        macro_candidate = self.cascademacros[:]
+        id = 0
+        while len(macro_candidate) > 0 and id < num_cascade_macro_adjust:
+            candidate_id = choice(list(range(len(macro_candidate))))
+            macro = macro_candidate[candidate_id]
+            macroid = macro.id
+            macro_reference_id = macro.reference_node
+            macro_res_type = self.nodes[macro_reference_id].resourcetype
+            nodecol = macro.Macronodecol
+            macrolength = len(nodecol)
+            Xcorr_macro = self.nodes[macro_reference_id].locX
+            Ycorr_macro = self.nodes[macro_reference_id].locY
+            site_macro = self.nodes[macro_reference_id].site
+            
+            # Construct feasible set
+            column_candidate = []
+            site_candidate = []
+            for column_id in restype_col[macro_res_type]:
+                if abs(column_id - Xcorr_macro) <= displacement_thres:
+                    column_candidate.append(column_id)
+
+            for column_id in column_candidate:
+                loc = col2loc[column_id]
+                for site_id in loc:
+                    site_current = self.sites[site_id]
+                    Xcorr_site_current = site_current.locX
+                    Ycorr_site_current = site_current.locY
+                    if Xcorr_site_current == Xcorr_macro and Ycorr_site_current == Ycorr_macro:
+                        continue
+                    if abs(Xcorr_site_current - Xcorr_macro) + abs(Ycorr_site_current - Ycorr_macro) > displacement_thres:
+                        continue
+                    subflag = True
+                    uram_cnt = 0
+                    for j in range(0, macrolength):
+                        if macro_res_type == "URAM288":
+                            if j!=0 and j % 4 == 0:
+                                uram_cnt += 1
+                            immed_site_id = site_id+uram_cnt
+                        else:
+                            immed_site_id = site_id+j
+                        
+                        X_immed = self.sites[immed_site_id].locX
+                        if self.sites[immed_site_id].CheckIsFull(macro_res_type):
+                            subflag = False
+                            break
+                        if X_immed != Xcorr_site_current:
+                            subflag = False
+                            break
+                    
+                    if subflag:
+                        site_candidate.append(site_id)
+            
+            if len(site_candidate) == 0:
+                macro_candidate.remove(macro)
+                continue
+            
+            # Randomly selected a site and adjust the location
+            site_chosen_id = choice(site_candidate)
+            Xcorr_site_chosen = self.sites[site_chosen_id]
+            Ycorr_site_chosen = self.sites[site_chosen_id]
+            uram_cnt = 0
+            for j in range(0, macrolength):
+                nodeid = nodecol[j].id
+                if macro_res_type == "URAM288":
+                    if j != 0 and j % 4 == 0:
+                        uram_cnt += 1
+                    immed_site_id = site_chosen_id+uram_cnt
+                    immed_site_id_org = site_macro+uram_cnt
+                else:
+                    immed_site_id = site_chosen_id+j
+                    immed_site_id_org = site_macro+j
+                immed_site_X = self.sites[immed_site_id].locX
+                immed_site_Y = self.sites[immed_site_id].locY
+                self.nodes[nodeid].ReSetPlaceLocation(immed_site_X, immed_site_Y, immed_site_id)
+                self.cascademacros[macroid].Macronodecol[j].ReSetPlaceLocation(immed_site_X, immed_site_Y, immed_site_id)
+                self.sites[immed_site_id].addNode(self.nodes[nodeid])
+                #print(macro.name, self.nodes[nodeid].id, self.nodes[nodeid].name, self.sites[immed_site_id_org].nodecol, immed_site_id_org)
+                self.sites[immed_site_id_org].removeNode(self.nodes[nodeid])
+                if immed_site_id in restype_loc[macro_res_type]:
+                    restype_loc[macro_res_type].remove(immed_site_id)
+                    col2loc[immed_site_X].remove(immed_site_id)
+            id = id + 1
+            macro_candidate.remove(macro)
+        
+        cascade_adjust = id
+        # Reduce the site that is full after placing the cascaded macro
+        for id in range(len(self.sites)):
+            siteid = self.sites[id].id
+            colid = self.sites[id].locX
+            for j in range(len(list(self.sites[id].resource_supply.keys()))):
+                res_name = list(self.sites[id].resource_supply.keys())[j]
+                if self.sites[id].resource_supply[res_name] > 0:
+                    if self.sites[id].CheckIsFull(res_name) and (siteid in restype_loc[res_name]):
+                        restype_loc[res_name].remove(siteid)
+                        col2loc[colid].remove(siteid)
+
+        # Fill the location with the non-cascade nodes (no overlapping with the cascaded macros)
+        num_non_cascade_macro_adjust = num_macro_adjust - cascade_adjust
+        num_non_cascade_macro_adjust = min(num_non_cascade_macro_adjust, self.num_basic_macro)
+        non_cascade_macro_candidate = []
+        non_cover = []
+        logger.info("Augment cascaded macros:"+str(cascade_adjust)+",basic macros:"+str(num_non_cascade_macro_adjust))
+        for nodeid in range(len(self.nodes)):
+            node_current = self.nodes[nodeid]
+            node_restype = node_current.resourcetype
+            if node_current.is_macro and node_current.cascade_id == -1:
+                site_current = node_current.site
+                Xcorr_current = node_current.locX
+                if not self.sites[site_current].CheckIsFull(node_restype):
+                    non_cover.append(nodeid)
+                else:
+                    non_cascade_macro_candidate.append(nodeid)
+        
+        #print(non_cover)
+        num_choice = num_non_cascade_macro_adjust - len(non_cascade_macro_candidate)
+        if len(non_cover) > 0:
+            for id in range(num_choice):
+                node_choice_id = choice(non_cover)
+                non_cascade_macro_candidate.append(node_choice_id)
+                non_cover.remove(node_choice_id)
+        for nodeid in non_cover:
+            site_current = self.nodes[nodeid].site
+            column_current = self.nodes[nodeid].locX
+            self.sites[site_current].addNode(self.nodes[nodeid])
+            restype = self.nodes[nodeid].resourcetype
+            restype_loc[restype].remove(site_current)
+            col2loc[column_current].remove(site_current)
+            
+        # Randomly find the corresponding place for each node
+        for nodeid in non_cascade_macro_candidate:
+            # Generate the feasible location set for each node
+            init_displacement_thres = displacement_thres
+            site_candidate = []
+            macro_locX = self.nodes[nodeid].locX
+            macro_locY = self.nodes[nodeid].locY
+            macro_res_type = self.nodes[nodeid].resourcetype
+            while len(site_candidate) == 0:
+                for site_id in restype_loc[macro_res_type]:
+                    site_current = self.sites[site_id]
+                    site_locX = self.sites[site_id].locX
+                    site_locY = self.sites[site_id].locY
+                    if macro_locX == site_locX and macro_locY == site_locY:
+                        continue
+                    if abs(macro_locX - site_locX) + abs(macro_locY - site_locY) <= init_displacement_thres:
+                        site_candidate.append(site_id)
+                init_displacement_thres = init_displacement_thres * 1.5
+            placed_site_id = choice(site_candidate)
+            placed_X = self.sites[placed_site_id].locX
+            placed_Y = self.sites[placed_site_id].locY
+            self.nodes[nodeid].ReSetPlaceLocation(placed_X, placed_Y, placed_site_id)
+            self.sites[placed_site_id].addNode(self.nodes[nodeid])
+            restype_loc[macro_res_type].remove(placed_site_id)
+            col2loc[placed_X].remove(placed_site_id)
+    
+    def calMacroHPWL(self):
+        totalMacroHPWL = 0
+        for id in range(len(self.nets)):
+            net_inst = self.nets[id]
+            min_X = 100000
+            min_Y = 100000
+            max_X = -100000
+            max_Y = -100000
+            for pinid in range(len(net_inst.pins)):
+                nodeid = net_inst.pins[pinid][0]
+                node = self.nodes[nodeid]
+                X_corr = node.locX
+                Y_corr = node.locY
+                if node.is_macro:
+                    if X_corr < min_X:
+                        min_X = X_corr
+                    if X_corr > max_X:
+                        max_X = X_corr
+                    if Y_corr < min_Y:
+                        min_Y = Y_corr
+                    if Y_corr > max_Y:
+                        max_Y = Y_corr
+            if min_X == 100000:
+                macroHPWL = 0
+            else:
+                macroHPWL = (max_X - min_X) + (max_Y - min_Y)
+            totalMacroHPWL += macroHPWL
+        return totalMacroHPWL
+        
     def OutputSolutionpl(self, output_path):
         with open(output_path, "w") as f_sol:
             output_str = ""
@@ -471,9 +715,9 @@ class Dataset:
             if self.nodes[id].locY < 0 or self.nodes[id].locY > self.sitemap_height:
                 logger.info("Invalid y location for node "+self.nodes[id].name+" "+str(self.nodes[id].locY))
                 return False
-            if not self.nodes[id].IsinRegionConstr():
-                logger.info("The location for node "+self.nodes[id].name+" not in the region constraints")                
-                return False
+            #if not self.nodes[id].IsinRegionConstr():
+            #    logger.info("The location for node "+self.nodes[id].name+" not in the region constraints")                
+            #    return False
             siteid = self.nodes[id].site
             resourcetype = self.nodes[id].resourcetype
             if self.sites[siteid].resource_supply[resourcetype]<=0:
@@ -486,6 +730,9 @@ class Dataset:
             for j in range(len(list(self.sites[i].resource_supply.keys()))):
                 res_name = list(self.sites[i].resource_supply.keys())[j]
                 if self.sites[i].resource_usage[res_name] > self.sites[i].resource_supply[res_name]:
+                    for id in range(len(self.sites[i].nodecol)):
+                        nodeid = self.sites[i].nodecol[id]
+                        print(self.nodes[nodeid].name)
                     logger.info("Excessive resource demand in Site:("+str(self.sites[i].locX)+","+str(self.sites[i].locY)+")"+" Demand:"+str(self.sites[i].resource_usage[res_name])+" Supply:"+str(self.sites[i].resource_supply[res_name]))
                     return False
         return True
@@ -502,9 +749,9 @@ class Dataset:
             for j in range(0,len(macro_node_id_col)):
                 nodeid = macro_node_id_col[j]
                 if ref_node.resourcetype == "URAM288":
-                    new_site_id = site_id + uram_cnt
-                    if j % 4 == 0:
+                    if j!=0 and j % 4 == 0:
                         uram_cnt += 1
+                    new_site_id = site_id + uram_cnt
                 else:
                     new_site_id = site_id + j
                 gt_site_locX = self.sites[new_site_id].locX
@@ -517,14 +764,14 @@ class Dataset:
         return True
     
     def CheckLegality(self, logger):
+        if not self.CheckLegalCoordinate(logger):
+            logger.info("Cell Coordinate Legality Check does not pass")
+            return False
         if not self.CheckResource(logger):
             logger.info("Site Resource Check does not pass")
             return False
         if not self.CheckMacroShape(logger):
             logger.info("Macro Placement Shape Check does not pass")
-            return False
-        if not self.CheckLegalCoordinate(logger):
-            logger.info("Cell Coordinate Legality Check does not pass")
             return False
         logger.info("Check pass!!")
         return True

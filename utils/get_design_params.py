@@ -3,7 +3,7 @@ import pdb
 
 def find_benchmark(dataset_root, benchmark):
     bm_to_root = {
-        "mlcad2023": os.path.join(dataset_root, "mlcad23")
+        "mlcad2023": os.path.join(dataset_root, "mlcad2023")
     }
     root = bm_to_root[benchmark]
     all_designs = [i for i in os.listdir(root) if os.path.isdir(os.path.join(root, i))]
@@ -40,7 +40,8 @@ def single_mlcad2023(dataset_root, design_name, placement=None):
         "cascade_shape": "%s/%s/design.cascade_shape" % (root,design_name),
         "cascade_instance": "%s/%s/design.cascade_shape_instances" % (root, design_name),
         "region_constr": "%s/%s/design.regions" % (root, design_name),
-        "sample": "%s/%s/sample.pl" % (root, design_name),   
+        "sample": "/data/ssd/qluo/benchmark/checkpoint/place_results/%s/solution_gt.pl" % design_name,
+        "sample_dir": "/data/ssd/qluo/benchmark/checkpoint/place_results/%s/" % design_name,  
         "design_name":design_name,
     }
     #print(params)

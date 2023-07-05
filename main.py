@@ -1,5 +1,5 @@
 from utils import *
-from src import run_placement_single, run_placement_all
+from src import run_placement_single, run_placement_all, augment_single_data
 import argparse
 import datetime
 import sys
@@ -19,22 +19,35 @@ def get_option():
     parser.add_argument("--log_name", type=str, default="test.log", help="log file name") 
     parser.add_argument("--eval_dir", type=str, default="eval", help="visualization directory")
 
-    parser.add_argument('--random_place', type=str2bool, default=True, help='If True, randomly place macros, or place them according to sample.pl.')
+    parser.add_argument("--random_place", type=str2bool, default=False, help="If True, randomly place macros, or place them according to sample.pl.")
+    parser.add_argument("--augument", type=str2bool, default=True, help="If True, randomly augment the benchmarks from solution_gt.pl.")
+    parser.add_argument("--augment_pos_num", type=int, default=29, help="Augment positive sample number")
+    parser.add_argument("--augment_neg_num", type=int, default=28, help="Augment negative sample number")
+    parser.add_argument("--augment_small_range", type=int, default=15, help="The small range for augumentation")
+    parser.add_argument("--augment_large_range", type=int, default=50, help="The large range for augmentation")
+    parser.add_argument("--augment_small_per", type=int, default=0.2, help="The small range for augumentation")
+    parser.add_argument("--augment_large_per", type=int, default=0.8, help="The small range for augumentation")
 
     args = parser.parse_args()
 
-    args.exp_id = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S') + args.exp_id
-    #args.exp_id = "1"
+    #args.exp_id = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S') + args.exp_id
+    args.exp_id = "3"
     return args
 
 def main():
     args = get_option()
     logger = setup_logger(args,sys.argv)
 
-    if args.run_all:
-        run_placement_all(args,logger)
+    if args.augument:
+        #if args.run_all:
+        #    augment_all_data(args, logger)
+        #else:
+        augment_single_data(args, logger)
     else:
-        run_placement_single(args,logger)
+        if args.run_all:
+            run_placement_all(args,logger)
+        else:
+            run_placement_single(args,logger)
 
 if __name__ == "__main__":
     main()

@@ -7,6 +7,7 @@ class Node:
         self.celltype = celltype
         self.resourcetype = None
         # The pins
+        self.pinNameIdMap = {}
         self.pins = []
         self.pin_num = 0
         # macro and cascade
@@ -31,7 +32,7 @@ class Node:
     
     def IsMacro(self):
         # Whther 'BRAM', 'URAM' and 'DSP' is in the node name
-        if 'BRAM' in self.name or ('URAM' in self.name or 'DSP' in self.name):
+        if 'RAMB' in self.celltype or ('URAM' in self.celltype or 'DSP' in self.celltype):
             return True
         else:
             return False
@@ -55,12 +56,22 @@ class Node:
             self.locY = locY
             self.site = site
             self.isPlace = True
+
+    def ReSetPlaceLocation(self, locX, locY, site):
+        if self.isPlace:
+            self.locX = locX
+            self.locY = locY
+            self.site = site
+            self.isPlace = True
     
     def SetResourceType(self, resourcetype):
         self.resourcetype = resourcetype
     
-    def AddPins(self, pins):
-        self.pins.extend(pins)
+    def addPin(self, pins):
+        for id in range(len(pins)):
+            if not pins[id].name in list(self.pinNameIdMap.keys()):
+                self.pinNameIdMap[pins[id].name] = len(self.pins)
+                self.pins.append(pins[id])
         self.pin_num = len(self.pins)
 
     def addNeighboringNets(self, netid):

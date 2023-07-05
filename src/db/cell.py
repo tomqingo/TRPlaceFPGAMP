@@ -28,12 +28,13 @@ class Cell:
     
     def addPin(self, pin_name, pin_IO, pin_clock=False, pin_ctrl=False):
         pin_id = len(self.pins)
-        newpin = Pin(pin_name, pin_IO, self.name)
-        newpin.SetIO(pin_IO)
-        if pin_clock:
-            newpin.SetClock()
-        if pin_ctrl:
-            newpin.SetCtrl()
-        self.pins.append(newpin)
-        self.pinNameIdMap[pin_name] = pin_id
-        self.pin_num = self.pin_num + 1
+        if not pin_name in list(self.pinNameIdMap.keys()):
+            newpin = Pin(pin_name, pin_IO, self.name)
+            newpin.SetIO(pin_IO)
+            if pin_clock:
+                newpin.SetClock()
+            if pin_ctrl:
+                newpin.SetCtrl()
+            self.pins.append(newpin)
+            self.pinNameIdMap[pin_name] = pin_id
+            self.pin_num = self.pin_num + 1

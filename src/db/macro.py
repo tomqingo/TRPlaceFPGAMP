@@ -27,14 +27,22 @@ class CascadeMacro:
             self.Macronodecol.append(node)
             # Sort the node according to the name for 1,2,3...n
             if len(self.Macronodecol) > 1:
-                ordered_list = self.Macronodecol[1:]
+                if "URAM_cascade_sub_instance" in self.name:
+                    ordered_list = self.Macronodecol[0:]
+                else:
+                    ordered_list = self.Macronodecol[1:]
+                
                 if "BRAM" in self.macrotype:
                     ordered_list.sort(key=lambda x:int(x.name.split("/")[-1][13:]))
                 elif "URAM" in self.macrotype:
                     ordered_list.sort(key=lambda x:int(x.name.split("/")[-1][12:]))
                 else:
                     ordered_list.sort(key=lambda x:int(x.name.split("/")[1][18:]))
-                self.Macronodecol[1:] = ordered_list                                        
+                
+                if "URAM_cascade_sub_instance" in self.name:
+                    self.Macronodecol[0:] = ordered_list
+                else:
+                    self.Macronodecol[1:] = ordered_list                                      
         else:
             self.Nonmacronodecol.append(node)
     

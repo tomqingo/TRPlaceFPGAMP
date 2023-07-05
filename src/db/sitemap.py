@@ -52,7 +52,11 @@ class Site:
     def addNode(self, node):
         self.nodecol.append(node.id)
         self.resource_usage[node.resourcetype] += 1
-
+    
+    def removeNode(self, node):
+        self.nodecol.remove(node.id)
+        self.resource_usage[node.resourcetype] -= 1
+    
     def CheckIsFull(self, res_name):
         return self.resource_supply[res_name] <= self.resource_usage[res_name]
 
