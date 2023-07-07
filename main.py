@@ -20,7 +20,7 @@ def get_option():
     parser.add_argument("--eval_dir", type=str, default="eval", help="visualization directory")
 
     parser.add_argument("--random_place", type=str2bool, default=False, help="If True, randomly place macros, or place them according to sample.pl.")
-    parser.add_argument("--augument", type=str2bool, default=True, help="If True, randomly augment the benchmarks from solution_gt.pl.")
+    parser.add_argument("--augument", type=str2bool, default=False, help="If True, randomly augment the benchmarks from solution_gt.pl.")
     parser.add_argument("--augment_pos_num", type=int, default=29, help="Augment positive sample number")
     parser.add_argument("--augment_neg_num", type=int, default=28, help="Augment negative sample number")
     parser.add_argument("--augment_small_range", type=int, default=15, help="The small range for augumentation")
