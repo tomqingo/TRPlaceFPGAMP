@@ -473,13 +473,10 @@ class Dataset:
                         restype_loc[node.resourcetype].remove(place_site_id)
                         flag = True
 
-    def RandomAugment(self, displacement_thres, augment_numper_thres, label_small_range, logger):
+    def RandomAugment(self, displacement_thres, augment_numper_thres, logger):
         num_macro_adjust_thres = int(self.num_macro*augment_numper_thres)
-        if label_small_range:
-            num_macro_adjust = choice(list(range(4, num_macro_adjust_thres)))
-        else:
-            num_macro_adjust = choice(list(range(num_macro_adjust_thres, self.num_macro)))
-        num_cascade_macro_adjust = choice(list(range(0, min(int(num_macro_adjust*0.3), self.num_cascade_macro))))
+        num_macro_adjust = choice(list(range(4, num_macro_adjust_thres)))
+        num_cascade_macro_adjust = choice(list(range(0, min(int(num_macro_adjust*0.3), self.num_cascade_macro)+1)))
         # The site and site column col to place the macros
         restype_loc = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
         restype_col = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
@@ -622,6 +619,7 @@ class Dataset:
         
         #print(non_cover)
         num_choice = num_non_cascade_macro_adjust - len(non_cascade_macro_candidate)
+        num_choice = min(num_choice, len(non_cover))
         if len(non_cover) > 0:
             for id in range(num_choice):
                 node_choice_id = choice(non_cover)
@@ -715,9 +713,9 @@ class Dataset:
             if self.nodes[id].locY < 0 or self.nodes[id].locY > self.sitemap_height:
                 logger.info("Invalid y location for node "+self.nodes[id].name+" "+str(self.nodes[id].locY))
                 return False
-            #if not self.nodes[id].IsinRegionConstr():
-            #    logger.info("The location for node "+self.nodes[id].name+" not in the region constraints")                
-            #    return False
+            if not self.nodes[id].IsinRegionConstr():
+                logger.info("The location for node "+self.nodes[id].name+" not in the region constraints")                
+                return False
             siteid = self.nodes[id].site
             resourcetype = self.nodes[id].resourcetype
             if self.sites[siteid].resource_supply[resourcetype]<=0:

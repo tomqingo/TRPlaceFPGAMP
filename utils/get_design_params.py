@@ -6,9 +6,28 @@ def find_benchmark(dataset_root, benchmark):
         "mlcad2023": os.path.join(dataset_root, "mlcad2023")
     }
     root = bm_to_root[benchmark]
-    all_designs = [i for i in os.listdir(root) if os.path.isdir(os.path.join(root, i))]
+    # Firstly exclude some testcases from the benchmark
+    uram_benchmark = [3,4,8,9,13,14,18,19,23,24,28,29,33,34,39,38,43,44,48,49,63,64,68,69,73,74,78,79,83,84,88,89,93,94,98,99,103,104,123,124,128,129,133,134,138,139,143,144,148,149,153,154,158,159,183,184,188,189,193,194,198,199,203,204,208,209,213,214,218,219,223,224]
+    benchmark_ignore = [1,146,157,2,5,6,7,10,11,12,15,16,17,20,21]
+    uram_benchmark_str = []
+    benchmark_ignore_str = []
+    for id in range(len(uram_benchmark)):
+        uram_file_name = "Design_"+str(uram_benchmark[id])
+        uram_benchmark_str.append(uram_file_name)
+    for id in range(len(benchmark_ignore)):
+        benchmark_ignore_filename = "Design_"+str(benchmark_ignore[id])
+        benchmark_ignore_str.append(benchmark_ignore_filename)
+    file_col = os.listdir(root)
+    file_col_prior = []
+    for id in range(len(file_col)):
+        if file_col[id] in uram_benchmark_str or file_col[id] in benchmark_ignore_str:
+            continue
+        file_col_prior.append(file_col[id])
+    all_designs = [i for i in file_col_prior if os.path.isdir(os.path.join(root, i))]
     #pdb.set_trace()
     all_designs.sort(key=lambda x: int(x[7:]))
+    uram_designs = [i for i in uram_benchmark_str if os.path.isdir(os.path.join(root, i))]
+    all_designs.extend(uram_designs)
     return root, all_designs
 
 def get_single_design_params(dataset_root, benchmark, design_name, placement=None):

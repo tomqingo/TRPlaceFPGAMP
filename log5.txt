@@ -1,0 +1,144 @@
+[   0.361] Command line: python main.py
+[   0.361] log file at result/3/log/test.log
+[   0.362] 
+[   0.362] dataset_root: /data/ssd/qluo/benchmark
+[   0.362] dataset: mlcad2023
+[   0.362] design_name: Design_208
+[   0.362] custom_path: 
+[   0.362] run_all: True
+[   0.362] runs: 8
+[   0.362] log_freq: 100
+[   0.362] result_dir: result
+[   0.362] exp_id: 3
+[   0.362] log_dir: log
+[   0.362] log_name: test.log
+[   0.362] eval_dir: eval
+[   0.362] random_place: False
+[   0.362] augument: True
+[   0.362] augment_pos_num: 8
+[   0.362] augment_neg_num: 8
+[   0.362] augment_small_range: 30
+[   0.362] augment_large_range: 100
+[   0.362] augment_small_per: 0.3
+[   0.362] augment_large_per: 0.7
+[   0.362] 
+[   0.362] Augment all designs in dataset mlcad2023.
+[   0.543] AugmentDesign_25
+[   0.544] loading from original benchmark...
+[   0.544] loading cell library
+[   0.567] Number of cells in the library:15
+[   0.567] loading netlist
+[  15.171] Number of nodes:640676
+[  35.576] Number of nets:701317
+[  35.576] loading sitemap
+[  36.825] Size of the site map:(206,300)
+[  36.826] Available Site:52360
+[  36.826] loading fixed position
+[  36.828] loading cascaded macro info
+[  38.178] loading region constraints
+[  38.640] Number of fix nodes:476
+[  38.640] Number of macros:2168
+[  38.640] Number of basic macros:2520,cascade macros:8
+[  38.641] Number of cascade macro nodes:360
+[  38.641] Region Constraints:4
+[  38.641] Region Constraint Node:57407
+[  38.641] Resource for the nodes in the circuit:LUT:280036 FF:343891 CARRY8:0 DSP48E2:1915 RAMB36E2:605 URAM288:0 IO:502 
+[  38.641] Supply Resource in the FPGA:LUT:788160 FF:788160 CARRY8:49260 DSP48E2:2280 RAMB36E2:720 URAM288:320 IO:1280 
+[  38.641] loading the macro placement result from sample.pl
+[ 146.926] Macro HPWL for vivado case:1507357
+[ 146.975] generating the augmented benchmark0
+[ 149.046] generating the augmented benchmark1
+[ 151.119] generating the augmented benchmark2
+[ 153.192] generating the augmented benchmark3
+[ 155.270] generating the augmented benchmark4
+[ 157.314] generating the augmented benchmark5
+[ 159.395] generating the augmented benchmark6
+[ 161.456] generating the augmented benchmark7
+[ 252.678] Augment cascaded macros:2,basic macros:327
+[ 254.055] Check pass!!
+[ 257.186] Macro HPWL 1614497
+[ 257.357] generating the augmented benchmark9
+[ 258.622] Augment cascaded macros:3,basic macros:324
+[ 260.077] Check pass!!
+[ 263.116] Augment cascaded macros:5,basic macros:103
+[ 263.229] Macro HPWL 1612633
+[ 263.401] generating the augmented benchmark8
+[ 264.104] Check pass!!
+[ 264.273] Augment cascaded macros:3,basic macros:358
+[ 264.973] Augment cascaded macros:1,basic macros:346
+[ 265.181] Check pass!!
+[ 266.021] Augment cascaded macros:6,basic macros:349
+[ 266.174] Check pass!!
+[ 267.291] Check pass!!
+[ 267.597] Macro HPWL 1630223
+[ 267.728] Macro HPWL 1572511
+[ 267.734] generating the augmented benchmark10
+[ 267.860] generating the augmented benchmark11
+[ 268.842] Macro HPWL 1636019
+[ 268.974] generating the augmented benchmark13
+[ 270.054] Macro HPWL 1621536
+[ 270.252] generating the augmented benchmark12
+[ 271.173] Augment cascaded macros:7,basic macros:404
+[ 271.635] Augment cascaded macros:7,basic macros:207
+[ 272.129] Check pass!!
+[ 273.343] Check pass!!
+[ 274.692] Macro HPWL 1652653
+[ 274.854] generating the augmented benchmark14
+[ 276.987] Macro HPWL 1577652
+[ 277.193] generating the augmented benchmark15
+[ 364.903] Augment cascaded macros:4,basic macros:1027
+[ 366.035] Augment cascaded macros:5,basic macros:623
+[ 366.267] Check pass!!
+[ 367.917] Check pass!!
+[ 369.418] Augment cascaded macros:3,basic macros:162
+[ 369.473] Macro HPWL 2787075
+[ 370.387] Check pass!!
+[ 370.554] Augment cascaded macros:3,basic macros:550
+[ 371.601] Check pass!!
+[ 372.029] Macro HPWL 2388291
+[ 372.431] Augment cascaded macros:5,basic macros:569
+[ 373.205] Macro HPWL 1741161
+[ 373.481] Check pass!!
+[ 374.497] Macro HPWL 2218887
+[ 376.143] Macro HPWL 2256191
+[ 376.525] Augment cascaded macros:4,basic macros:1087
+[ 377.339] Augment cascaded macros:2,basic macros:869
+[ 377.794] Check pass!!
+[ 378.446] Check pass!!
+[ 380.285] Macro HPWL 2850634
+[ 380.929] Macro HPWL 2637994
+[ 381.989] Augment cascaded macros:8,basic macros:1172
+[ 383.236] Check pass!!
+[ 385.721] Macro HPWL 2914693
+[ 387.427] Finish augment designDesign_25
+[ 387.428] AugmentDesign_26
+[ 387.430] loading from original benchmark...
+[ 387.430] loading cell library
+[ 387.456] Number of cells in the library:15
+[ 387.456] loading netlist
+[ 404.458] Number of nodes:625889
+[ 424.061] Number of nets:675254
+[ 424.061] loading sitemap
+[ 425.361] Size of the site map:(206,300)
+[ 425.361] Available Site:52360
+[ 425.361] loading fixed position
+[ 425.363] loading cascaded macro info
+[ 425.363] loading region constraints
+[ 425.833] Number of fix nodes:476
+[ 425.834] Number of macros:2520
+[ 425.834] Number of basic macros:2520,cascade macros:0
+[ 425.834] Number of cascade macro nodes:0
+[ 425.834] Region Constraints:4
+[ 425.834] Region Constraint Node:57048
+[ 425.834] Resource for the nodes in the circuit:LUT:279796 FF:331027 CARRY8:0 DSP48E2:1915 RAMB36E2:605 URAM288:0 IO:502 
+[ 425.834] Supply Resource in the FPGA:LUT:788160 FF:788160 CARRY8:49260 DSP48E2:2280 RAMB36E2:720 URAM288:320 IO:1280 
+[ 427.254] loading the macro placement result from sample.pl
+[ 529.783] Macro HPWL for vivado case:1416852
+[ 529.822] generating the augmented benchmark0
+[ 531.893] generating the augmented benchmark1
+[ 533.985] generating the augmented benchmark2
+[ 536.058] generating the augmented benchmark3
+[ 538.113] generating the augmented benchmark4
+[ 540.207] generating the augmented benchmark5
+[ 542.267] generating the augmented benchmark6
+[ 544.360] generating the augmented benchmark7
