@@ -1,5 +1,6 @@
 from utils import *
 from src import *
+from src.MacroPl import *
 import pandas as pd
 import copy
 import os
@@ -8,6 +9,15 @@ import os
 def run_placement_main(args, logger):
     # Load Dataset
     dataset = load_dataset(args, logger)
+    # Convert the dataset to the placementinfo (integrating simple and cascade macros)
+    placementinfo = PlacementInfo(dataset)
+    placementinfo.Convert2PlacementInfo(logger)
+    # Extract the initial feature for each placement unit
+    feature_extractor = FeatureExtractor(placementinfo)
+    output_path = os.path.join(args.result_dir, args.exp_id, args.log_dir, args.design_name, "out1_node_feature_label.txt")
+    feature_extractor.OutputNodeFeature(output_path)
+    output_path = os.path.join(args.result_dir, args.exp_id, args.log_dir, args.design_name, "out1_graph_edges.txt")
+    feature_extractor.OutputNodelink(output_path)    
     # Run Macro Placement
     if args.random_place:
         dataset.RandomCordGenerate(logger)
@@ -20,6 +30,10 @@ def run_placement_main(args, logger):
     if not os.path.exists(os.path.dirname(output_path)):
         os.makedirs(os.path.dirname(output_path))
     dataset.OutputSolutionpl(output_path)
+    # draw the placement result by inherent visulization tool
+    totalMacroHPWL = dataset.calMacroHPWL()
+    logger.info("Macro HPWL: {}".format(totalMacroHPWL))
+    draw_macro_placement_result(args, dataset, logger)
     design_info = (dataset.num_nodes, dataset.num_nets, dataset.num_macro, dataset.num_basic_macro, dataset.num_cascade_macro, dataset.num_fix, dataset.num_region_constr, dataset.num_region_constr_node)
     resource = ["LUT", "FF", "CARRY8", "DSP48E2", "RAMB36E2", "URAM288", "IO"]
     design_resource_info = []

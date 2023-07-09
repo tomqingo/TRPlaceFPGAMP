@@ -109,6 +109,8 @@ class Dataset:
                                 pinId = self.cellLib[celltype].pinNameIdMap[pinname]
                                 pin = self.cellLib[celltype].pins[pinId]
                                 new_net.addPin([nodeid, pin])
+                                if self.nodes[nodeid].is_macro:
+                                    new_net.addMacroNodeAdj(nodeid)
                         self.nets.append(new_net)
                         self.netNameIdMap[cur_line_col[1]] = netid
                         id = id + 1
@@ -421,9 +423,9 @@ class Dataset:
                     subflag = True
                     for j in range(1, macrolength):
                         if reference_node.resourcetype == "URAM288":
-                            immed_site_id = place_site_id+uram_cnt
-                            if j % 4 == 0:
+                            if j!=0 and j % 4 == 0:
                                 uram_cnt += 1
+                            immed_site_id = place_site_id+uram_cnt
                         else:
                             immed_site_id = place_site_id+j
                         X_immed = self.sites[immed_site_id].locX
@@ -440,9 +442,9 @@ class Dataset:
                         for j in range(0, macrolength):
                             nodeid = nodecol[j].id
                             if reference_node.resourcetype == "URAM288":
-                                immed_site_id = place_site_id+uram_cnt
-                                if j % 4 == 0:
+                                if j!=0 and j % 4 == 0:
                                     uram_cnt += 1
+                                immed_site_id = place_site_id+uram_cnt
                             else:
                                 immed_site_id = place_site_id+j
                             immed_site_X = self.sites[immed_site_id].locX
@@ -713,9 +715,9 @@ class Dataset:
             if self.nodes[id].locY < 0 or self.nodes[id].locY > self.sitemap_height:
                 logger.info("Invalid y location for node "+self.nodes[id].name+" "+str(self.nodes[id].locY))
                 return False
-            if not self.nodes[id].IsinRegionConstr():
-                logger.info("The location for node "+self.nodes[id].name+" not in the region constraints")                
-                return False
+            #if not self.nodes[id].IsinRegionConstr():
+            #    logger.info("The location for node "+self.nodes[id].name+" not in the region constraints")                
+            #    return False
             siteid = self.nodes[id].site
             resourcetype = self.nodes[id].resourcetype
             if self.sites[siteid].resource_supply[resourcetype]<=0:
