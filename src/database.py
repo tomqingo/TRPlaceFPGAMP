@@ -19,6 +19,7 @@ class Dataset:
         self.sitecolumns = {} #The site columns for each
 
         self.nodes = [] #nodes col, the list variable
+        self.macronodeswithRegionConstr = [] #nodes col with regional constraint
         self.nets = [] #nets col, the list variable
         self.sites = [] #The sites that could place the nodes
 
@@ -34,6 +35,7 @@ class Dataset:
         self.num_nets = 0
         self.num_resource_demand = {"LUT":0, "FF":0, "CARRY8":0, "DSP48E2":0, "RAMB36E2":0, "URAM288":0, "IO":0}
         self.num_resource_supply = {"LUT":0, "FF":0, "CARRY8":0, "DSP48E2":0, "RAMB36E2":0, "URAM288":0, "IO":0}
+        self.num_bel = 0
         
         #Macro number statistics
         self.num_basic_macro = 0
@@ -45,11 +47,14 @@ class Dataset:
         self.sitemap_width = 0
         self.sitemap_height = 0
         self.num_avail_site = 0
+        self.num_avail_site_dict = {"SLICE":0, "DSP":0, "BRAM":0, "URAM":0, "IO":0}
 
         #fix node and regional constraints
         self.num_fix = 0
         self.num_region_constr = 0
         self.num_region_constr_node = 0
+        self.num_region_constr_maceonode = 0
+        self.num_region_constr_cascademaceonode = 0
     
     def readNodes(self):
         if os.path.exists(self.params["nodes"]):
@@ -210,8 +215,10 @@ class Dataset:
                             self.sitemap_res[int(cur_line_col[0])][int(cur_line_col[1])] = self.sitetypeIdMap[cur_line_col[2]].id
                             for res_id, res_name in enumerate(list(self.sitetypes[sitetype_id].resourcecap.keys())):     
                                 self.num_resource_supply[res_name] += self.sitetypes[sitetype_id].resourcecap[res_name] 
+                                self.num_bel += 1
                             id = id + 1
                             site_id = site_id + 1
+                            self.num_avail_site_dict[cur_line_col[2]] += 1
                 self.num_avail_site = site_id
 
                 for nodeid in range(len(self.nodes)):
@@ -272,6 +279,8 @@ class Dataset:
                         continue
                     macroinst = None
                     macroinst_sub = None
+                    if cur_line_col[0].upper() == "BRAM_CASCADE":
+                        cur_line_col[0] = "BRAM_CASCADE_2"
                     if cur_line_col[0].upper() in list(self.macrotypeIdMap.keys()):
                         # For the macro URAM, you have to split it into two cascaded macros
                         if "URAM_CASCADE_8x2" in cur_line_col[3]:
@@ -289,6 +298,7 @@ class Dataset:
                         self.nodes[nodeid].is_cascade_refer = True
                         macroinst.SetReferenceNode(nodeid)
                         id = id + 1
+                        #print(cur_line_col[3])
                         for subid in range(len(self.nodes)):
                             if cur_line_col[3] in self.nodes[subid].name:
                                 if "URAM_cascade_sub_instance" in self.nodes[subid].name:
@@ -312,6 +322,7 @@ class Dataset:
                         macroinst_id = macroinst_id + 1
                     else:
                         continue
+
 
     def readRegionConstraints(self):
         if os.path.exists(self.params["region_constr"]):
@@ -347,6 +358,8 @@ class Dataset:
                             nodeid = self.nodeNameIdMap[cur_line_col[0]]
                             self.nodes[nodeid].regionconstr_type = int(cur_line_col[1])
                             self.nodes[nodeid].regionconstr.extend(self.regionconstrtype[int(cur_line_col[1])].constrcol)
+                            if self.nodes[nodeid].is_macro:
+                                self.macronodeswithRegionConstr.append(nodeid)
                             id = id + 1
 
     def readSamplePl(self, logger):
@@ -397,6 +410,7 @@ class Dataset:
         logger.info("random generated macro placement results")
         restype_loc = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
         
+        region_slack = 10
         for id in range(len(self.sites)):
             for j in range(len(list(self.sites[id].resource_supply.keys()))):
                 res_name = list(self.sites[id].resource_supply.keys())[j]
@@ -459,10 +473,37 @@ class Dataset:
 
                     flag = subflag                                                       
 
-        # Nonmacrocascade nodes  
+        # Place the nonmacrocascade nodes
+        for id in range(len(self.macronodeswithRegionConstr)):
+            nodeid = self.macronodeswithRegionConstr[id]
+            candidate = restype_loc[self.nodes[nodeid].resourcetype]
+            candidate_in_RegionConstr = []
+            for siteid in candidate:
+                site = self.sites[siteid]
+                locX = site.locX
+                locY = site.locY
+                self.nodes[nodeid].SetPlaceLocation(locX, locY, siteid)
+                if self.nodes[nodeid].IsinRegionConstr(region_slack):
+                    candidate_in_RegionConstr.append(siteid)
+                self.nodes[nodeid].ReturnToDefaultPlaceLocation()
+            if len(candidate_in_RegionConstr) == 0:
+                logger.info("The Nonmacro Node with regional constraints could not find feasible place!!")
+            
+            flag = False
+            while not flag:
+                place_site_id = choice(candidate_in_RegionConstr)
+                if not self.sites[place_site_id].CheckIsFull(self.nodes[nodeid].resourcetype):
+                    locX = self.sites[place_site_id].locX
+                    locY = self.sites[place_site_id].locY
+                    self.nodes[nodeid].SetPlaceLocation(locX,locY,place_site_id)
+                    self.sites[place_site_id].addNode(self.nodes[nodeid])
+                    restype_loc[self.nodes[nodeid].resourcetype].remove(place_site_id)
+                    flag = True
+
+        # Nonmacrocascade nodes with no regional constraints 
         for id in range(len(self.nodes)):
             node = self.nodes[id]
-            if node.is_macro and node.cascade_id == -1:
+            if node.is_macro and (node.cascade_id == -1 and node.regionconstr_type == -1):
                 flag = False
                 while not flag:
                     candidate = restype_loc[node.resourcetype]
@@ -483,6 +524,8 @@ class Dataset:
         restype_loc = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
         restype_col = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
         col2loc = {}
+        region_slack = 10 # The slack distance from the region
+
         for id in range(len(self.sites)):
             col_id = self.sites[id].locX
             if not col_id in col2loc:
@@ -497,6 +540,7 @@ class Dataset:
                         restype_col[res_name].append(col_id)
         #print(restype_loc)
         #print(restype_col)
+
         # temporally clear the uncascaded macro on the sites
         for id in range(len(self.sites)):
             site_current = self.sites[id]
@@ -606,7 +650,9 @@ class Dataset:
         num_non_cascade_macro_adjust = num_macro_adjust - cascade_adjust
         num_non_cascade_macro_adjust = min(num_non_cascade_macro_adjust, self.num_basic_macro)
         non_cascade_macro_candidate = []
-        non_cover = []
+        non_cover_with_RC = []
+        non_cover_wo_RC = []
+
         logger.info("Augment cascaded macros:"+str(cascade_adjust)+",basic macros:"+str(num_non_cascade_macro_adjust))
         for nodeid in range(len(self.nodes)):
             node_current = self.nodes[nodeid]
@@ -615,28 +661,86 @@ class Dataset:
                 site_current = node_current.site
                 Xcorr_current = node_current.locX
                 if not self.sites[site_current].CheckIsFull(node_restype):
-                    non_cover.append(nodeid)
+                    if node_current.regionconstr_type == -1:
+                        non_cover_wo_RC.append(nodeid)
+                    else:
+                        non_cover_with_RC.append(nodeid)
                 else:
                     non_cascade_macro_candidate.append(nodeid)
         
         #print(non_cover)
         num_choice = num_non_cascade_macro_adjust - len(non_cascade_macro_candidate)
-        num_choice = min(num_choice, len(non_cover))
-        if len(non_cover) > 0:
-            for id in range(num_choice):
-                node_choice_id = choice(non_cover)
+        num_choice_nodes_with_RC = int(num_choice*0.4)
+        num_choice_nodes_with_RC = min(num_choice_nodes_with_RC, len(non_cover_with_RC))
+        num_choice_nodes_wo_RC = num_choice - num_choice_nodes_with_RC
+        num_choice_nodes_wo_RC = min(num_choice_nodes_wo_RC, len(non_cover_wo_RC))
+
+        if len(non_cover_with_RC) > 0:
+            for id in range(num_choice_nodes_with_RC):
+                node_choice_id = choice(non_cover_with_RC)
                 non_cascade_macro_candidate.append(node_choice_id)
-                non_cover.remove(node_choice_id)
-        for nodeid in non_cover:
+                non_cover_with_RC.remove(node_choice_id)
+
+        if len(non_cover_wo_RC) > 0:
+            for id in range(num_choice_nodes_wo_RC):
+                node_choice_id = choice(non_cover_wo_RC)
+                non_cascade_macro_candidate.append(node_choice_id)
+                non_cover_wo_RC.remove(node_choice_id)
+        
+        for nodeid in non_cover_with_RC:
             site_current = self.nodes[nodeid].site
             column_current = self.nodes[nodeid].locX
             self.sites[site_current].addNode(self.nodes[nodeid])
             restype = self.nodes[nodeid].resourcetype
             restype_loc[restype].remove(site_current)
             col2loc[column_current].remove(site_current)
-            
-        # Randomly find the corresponding place for each node
+
+        for nodeid in non_cover_wo_RC:
+            site_current = self.nodes[nodeid].site
+            column_current = self.nodes[nodeid].locX
+            self.sites[site_current].addNode(self.nodes[nodeid])
+            restype = self.nodes[nodeid].resourcetype
+            restype_loc[restype].remove(site_current)
+            col2loc[column_current].remove(site_current)
+        
+        # Randomly find the corresponding place for each region-constrained node
         for nodeid in non_cascade_macro_candidate:
+            if self.nodes[nodeid].regionconstr_type == -1:
+                continue
+            init_displacement_thres = displacement_thres
+            site_candidate = []
+            macro_locX = self.nodes[nodeid].locX
+            macro_locY = self.nodes[nodeid].locY
+            macro_siteid = self.nodes[nodeid].site
+            macro_res_type = self.nodes[nodeid].resourcetype
+            while len(site_candidate) == 0:
+                for site_id in restype_loc[macro_res_type]:
+                    site_current = self.sites[site_id]
+                    site_locX = self.sites[site_id].locX
+                    site_locY = self.sites[site_id].locY
+                    #if macro_locX == site_locX and macro_locY == site_locY:
+                    #    continue
+                    self.nodes[nodeid].ReSetPlaceLocation(site_locX, site_locY, site_id)
+                    if not self.nodes[nodeid].IsinRegionConstr(region_slack):
+                        self.nodes[nodeid].ReSetPlaceLocation(macro_locX, macro_locY, macro_siteid)
+                        continue
+                    self.nodes[nodeid].ReSetPlaceLocation(macro_locX, macro_locY, macro_siteid)
+                    if abs(macro_locX - site_locX) + abs(macro_locY - site_locY) <= init_displacement_thres:
+                        site_candidate.append(site_id)
+                init_displacement_thres = init_displacement_thres * 1.5
+            placed_site_id = choice(site_candidate)
+            placed_X = self.sites[placed_site_id].locX
+            placed_Y = self.sites[placed_site_id].locY
+            self.nodes[nodeid].ReSetPlaceLocation(placed_X, placed_Y, placed_site_id)
+            self.sites[placed_site_id].addNode(self.nodes[nodeid])
+            restype_loc[macro_res_type].remove(placed_site_id)
+            col2loc[placed_X].remove(placed_site_id)
+
+
+        # Randomly find the corresponding place for each non-region_constrained node
+        for nodeid in non_cascade_macro_candidate:
+            if self.nodes[nodeid].regionconstr_type != -1:
+                continue
             # Generate the feasible location set for each node
             init_displacement_thres = displacement_thres
             site_candidate = []
@@ -674,7 +778,7 @@ class Dataset:
                 node = self.nodes[nodeid]
                 X_corr = node.locX
                 Y_corr = node.locY
-                if node.is_macro:
+                if node.is_macro or node.is_fixed:
                     if X_corr < min_X:
                         min_X = X_corr
                     if X_corr > max_X:
@@ -704,6 +808,7 @@ class Dataset:
                         output_str += " "
                         output_str += "0\n"
             f_sol.write(output_str)
+            #print(output_path)
     
     def CheckLegalCoordinate(self, logger):
         for id in range(len(self.nodes)):
@@ -715,9 +820,9 @@ class Dataset:
             if self.nodes[id].locY < 0 or self.nodes[id].locY > self.sitemap_height:
                 logger.info("Invalid y location for node "+self.nodes[id].name+" "+str(self.nodes[id].locY))
                 return False
-            #if not self.nodes[id].IsinRegionConstr():
-            #    logger.info("The location for node "+self.nodes[id].name+" not in the region constraints")                
-            #    return False
+            if not self.nodes[id].IsinRegionConstr():
+                logger.info("The location for node "+self.nodes[id].name+" not in the region constraints")                
+                return False
             siteid = self.nodes[id].site
             resourcetype = self.nodes[id].resourcetype
             if self.sites[siteid].resource_supply[resourcetype]<=0:
@@ -732,7 +837,7 @@ class Dataset:
                 if self.sites[i].resource_usage[res_name] > self.sites[i].resource_supply[res_name]:
                     for id in range(len(self.sites[i].nodecol)):
                         nodeid = self.sites[i].nodecol[id]
-                        print(self.nodes[nodeid].name)
+                        #print(self.nodes[nodeid].name)
                     logger.info("Excessive resource demand in Site:("+str(self.sites[i].locX)+","+str(self.sites[i].locY)+")"+" Demand:"+str(self.sites[i].resource_usage[res_name])+" Supply:"+str(self.sites[i].resource_supply[res_name]))
                     return False
         return True
@@ -807,13 +912,18 @@ class Dataset:
                 self.num_resource_demand[nodeper.resourcetype] = self.num_resource_demand[nodeper.resourcetype] + 1
             if nodeper.is_fixed:
                 self.num_fix = self.num_fix + 1
-            if nodeper.is_macro:
+            if nodeper.is_macro and nodeper.cascade_id == -1:
                 self.num_basic_macro = self.num_basic_macro + 1
             if nodeper.is_macro and nodeper.cascade_id != -1:
                 self.num_cascade_node = self.num_cascade_node + 1
             if nodeper.regionconstr_type!=-1:
                 self.num_region_constr_node = self.num_region_constr_node + 1
-        self.num_macro = self.num_basic_macro - self.num_cascade_node + self.num_cascade_macro
+                if nodeper.is_macro:
+                    self.num_region_constr_maceonode = self.num_region_constr_maceonode + 1
+                    if nodeper.cascade_id != -1:
+                        self.num_region_constr_cascademaceonode += 1
+            
+        self.num_macro = self.num_basic_macro + self.num_cascade_macro
 
         logger.info("Number of fix nodes:"+str(self.num_fix))
         logger.info("Number of macros:"+str(self.num_macro))
@@ -821,6 +931,8 @@ class Dataset:
         logger.info("Number of cascade macro nodes:"+str(self.num_cascade_node))
         logger.info("Region Constraints:"+str(self.num_region_constr))
         logger.info("Region Constraint Node:"+str(self.num_region_constr_node))
+        logger.info("Region Constraint Macro Node:"+str(self.num_region_constr_maceonode))
+        logger.info("Region Constraint Cascade Node:"+str(self.num_region_constr_cascademaceonode))
         str_out = "Resource for the nodes in the circuit:"
         for res_id, res_name in enumerate(list(self.num_resource_demand.keys())):
             str_out = str_out + res_name + ":"+str(self.num_resource_demand[res_name])+" "

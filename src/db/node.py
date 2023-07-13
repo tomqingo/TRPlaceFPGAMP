@@ -37,15 +37,15 @@ class Node:
         else:
             return False
     
-    def IsinRegionConstr(self):
+    def IsinRegionConstr(self, region_slack=0):
         if self.regionconstr_type == -1:
             return True
         else:
             for constrid in range(len(self.regionconstr)):
-                XLo = self.regionconstr[constrid][0]
-                YLo = self.regionconstr[constrid][1]
-                XHi = self.regionconstr[constrid][2]
-                YHi = self.regionconstr[constrid][3]
+                XLo = self.regionconstr[constrid][0]+region_slack
+                YLo = self.regionconstr[constrid][1]+region_slack
+                XHi = self.regionconstr[constrid][2]-region_slack
+                YHi = self.regionconstr[constrid][3]-region_slack
                 if (self.locX>=XLo and self.locX<=XHi) and (self.locY>=YLo and self.locY<=YHi):
                     return True
             return False
@@ -63,6 +63,12 @@ class Node:
             self.locY = locY
             self.site = site
             self.isPlace = True
+    
+    def ReturnToDefaultPlaceLocation(self):
+        self.locX = 0
+        self.locY = 0
+        self.site = 0
+        self.isPlace = False
     
     def SetResourceType(self, resourcetype):
         self.resourcetype = resourcetype
