@@ -411,7 +411,8 @@ class Dataset:
         restype_loc = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
         
         left_right_region_slack = 1.0
-        up_down_region_slack = 5.0
+        bram_up_down_region_slack = 5.0 # The slack distance from the region up/down boundary for bram
+        dsp_up_down_region_slack = 3.0 # The slack distance from the region up/down boundary for dsp
 
         for id in range(len(self.sites)):
             for j in range(len(list(self.sites[id].resource_supply.keys()))):
@@ -485,6 +486,10 @@ class Dataset:
                 locX = site.locX
                 locY = site.locY
                 self.nodes[nodeid].SetPlaceLocation(locX, locY, siteid)
+                if self.nodes[nodeid].IsBRAM():
+                    up_down_region_slack = bram_up_down_region_slack
+                if self.nodes[nodeid].IsDSP():
+                    up_down_region_slack = dsp_up_down_region_slack  
                 if self.nodes[nodeid].IsinRegionConstr(left_right_region_slack, up_down_region_slack):
                     candidate_in_RegionConstr.append(siteid)
                 self.nodes[nodeid].ReturnToDefaultPlaceLocation()
@@ -527,7 +532,8 @@ class Dataset:
         restype_col = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
         col2loc = {}
         left_right_region_slack = 1.0 # The slack distance from the region left/right boundary
-        up_down_region_slack = 5.0 # The slack distance from the region up/down boundary
+        bram_up_down_region_slack = 5.0 # The slack distance from the region up/down boundary for bram
+        dsp_up_down_region_slack = 3.0 # The slack distance from the region up/down boundary for dsp
 
         for id in range(len(self.sites)):
             col_id = self.sites[id].locX
@@ -724,6 +730,10 @@ class Dataset:
                     #if macro_locX == site_locX and macro_locY == site_locY:
                     #    continue
                     self.nodes[nodeid].ReSetPlaceLocation(site_locX, site_locY, site_id)
+                    if self.nodes[nodeid].IsBRAM():
+                        up_down_region_slack = bram_up_down_region_slack
+                    if self.nodes[nodeid].IsDSP():
+                        up_down_region_slack = dsp_up_down_region_slack                        
                     if not self.nodes[nodeid].IsinRegionConstr(left_right_region_slack, up_down_region_slack):
                         self.nodes[nodeid].ReSetPlaceLocation(macro_locX, macro_locY, macro_siteid)
                         continue

@@ -37,6 +37,25 @@ class Node:
         else:
             return False
     
+    def IsBRAM(self):
+        # Whther 'BRAM', 'URAM' and 'DSP' is in the node name
+        if 'RAMB' in self.celltype:
+            return True
+        else:
+            return False
+    
+    def IsDSP(self):
+        if 'DSP' in self.celltype:
+            return True
+        else:
+            return False
+
+    def IsURAM(self):
+        if 'URAM' in self.celltype:
+            return True
+        else:
+            return False        
+    
     def IsinRegionConstr(self, left_right_region_slack=0, up_down_region_slack=0):
         if self.regionconstr_type == -1:
             return True

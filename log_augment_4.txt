@@ -1,0 +1,1234 @@
+[   0.635] Command line: python main.py
+[   0.635] log file at result/augment_3/log/test.log
+[   0.635] 
+[   0.636] dataset_root: /data/ssd/qluo/benchmark
+[   0.636] dataset: mlcad2023
+[   0.636] design_name: Design_2
+[   0.636] custom_path: 
+[   0.636] run_all: True
+[   0.636] runs: 16
+[   0.636] log_freq: 100
+[   0.636] result_dir: result
+[   0.636] exp_id: augment_3
+[   0.636] log_dir: log
+[   0.636] log_name: test.log
+[   0.636] eval_dir: eval
+[   0.636] random_place: False
+[   0.636] augument: True
+[   0.636] augment_pos_num: 20
+[   0.636] augment_neg_num: 37
+[   0.636] augment_small_range: 50
+[   0.636] augment_large_range: 100
+[   0.636] augment_small_per: 0.5
+[   0.636] augment_large_per: 0.7
+[   0.636] 
+[   0.636] Augment all designs in dataset mlcad2023.
+[   0.653] AugmentDesign_181
+[   0.654] loading from original benchmark...
+[   0.654] loading cell library
+[   0.673] Number of cells in the library:15
+[   0.673] loading netlist
+[  11.538] Number of nodes:561611
+[  26.818] Number of nets:608534
+[  26.818] loading sitemap
+[  27.770] Size of the site map:(206,300)
+[  27.770] Available Site:53100
+[  27.770] loading fixed position
+[  27.772] loading cascaded macro info
+[  27.772] loading region constraints
+[  28.080] Number of fix nodes:453
+[  28.080] Number of macros:2400
+[  28.080] Number of basic macros:2400,cascade macros:0
+[  28.080] Number of cascade macro nodes:0
+[  28.080] Region Constraints:0
+[  28.080] Region Constraint Node:0
+[  28.080] Region Constraint Macro Node:0
+[  28.080] Region Constraint Cascade Node:0
+[  28.080] Resource for the nodes in the circuit:LUT:256152 FF:299501 CARRY8:0 DSP48E2:1824 RAMB36E2:576 URAM288:0 IO:456 
+[  28.080] Supply Resource in the FPGA:LUT:788160 FF:788160 CARRY8:49260 DSP48E2:2280 RAMB36E2:720 URAM288:1280 IO:33280 
+[  28.080] loading the macro placement result from sample.pl
+[  93.746] Macro HPWL for vivado case:1779136
+[  93.783] generating the augmented benchmark0
+[  95.820] generating the augmented benchmark2
+[  97.857] generating the augmented benchmark4
+[  99.897] generating the augmented benchmark6
+[ 101.936] generating the augmented benchmark8
+[ 103.975] generating the augmented benchmark10
+[ 106.017] generating the augmented benchmark12
+[ 108.057] generating the augmented benchmark14
+[ 110.130] generating the augmented benchmark16
+[ 112.182] generating the augmented benchmark18
+[ 114.256] generating the augmented benchmark50
+[ 116.333] generating the augmented benchmark53
+[ 118.406] generating the augmented benchmark56
+[ 158.760] Augment cascaded macros:0,basic macros:1169
+[ 160.030] Check pass!!
+[ 161.950] Augment cascaded macros:0,basic macros:333
+[ 163.038] Check pass!!
+[ 164.030] Macro HPWL 2584320
+[ 164.320] Augment cascaded macros:0,basic macros:332
+[ 164.404] generating the augmented benchmark1
+[ 165.176] Check pass!!
+[ 165.681] Augment cascaded macros:0,basic macros:6
+[ 166.409] Macro HPWL 2020204
+[ 166.512] Augment cascaded macros:0,basic macros:1071
+[ 166.523] Check pass!!
+[ 166.644] generating the augmented benchmark3
+[ 167.856] Macro HPWL 2058170
+[ 168.086] generating the augmented benchmark5
+[ 168.483] Check pass!!
+[ 169.326] Macro HPWL 1786135
+[ 169.565] generating the augmented benchmark7
+[ 170.761] Augment cascaded macros:0,basic macros:231
+[ 171.260] Macro HPWL 2572467
+[ 171.500] generating the augmented benchmark9
+[ 171.577] Check pass!!
+[ 171.697] Augment cascaded macros:0,basic macros:573
+[ 171.892] Augment cascaded macros:0,basic macros:231
+[ 172.642] Check pass!!
+[ 172.769] Check pass!!
+[ 174.140] Macro HPWL 1973537
+[ 174.366] generating the augmented benchmark15
+[ 175.517] Macro HPWL 1966064
+[ 175.812] generating the augmented benchmark11
+[ 176.267] Macro HPWL 2216777
+[ 176.507] generating the augmented benchmark13
+[ 177.255] Augment cascaded macros:0,basic macros:1125
+[ 178.436] Check pass!!
+[ 181.145] Macro HPWL 2579524
+[ 181.380] generating the augmented benchmark17
+[ 186.935] Augment cascaded macros:0,basic macros:8
+[ 187.942] Check pass!!
+[ 188.787] Augment cascaded macros:0,basic macros:921
+[ 189.223] Augment cascaded macros:0,basic macros:333
+[ 189.909] Check pass!!
+[ 190.086] Check pass!!
+[ 192.104] Macro HPWL 1789251
+[ 192.429] generating the augmented benchmark19
+[ 192.606] Macro HPWL 3245957
+[ 192.844] Macro HPWL 2402259
+[ 192.853] generating the augmented benchmark51
+[ 193.272] Augment cascaded macros:0,basic macros:1227
+[ 195.064] Check pass!!
+[ 198.123] Macro HPWL 3635673
+[ 198.396] generating the augmented benchmark54
+[ 236.429] Augment cascaded macros:0,basic macros:853
+[ 237.131] Augment cascaded macros:0,basic macros:833
+[ 237.772] Augment cascaded macros:0,basic macros:595
+[ 238.207] Check pass!!
+[ 238.338] Check pass!!
+[ 238.358] Augment cascaded macros:0,basic macros:246
+[ 238.699] Augment cascaded macros:0,basic macros:467
+[ 238.898] Check pass!!
+[ 239.181] Augment cascaded macros:0,basic macros:577
+[ 239.316] Check pass!!
+[ 239.668] Check pass!!
+[ 240.223] Check pass!!
+[ 241.070] Macro HPWL 2366808
+[ 241.336] generating the augmented benchmark29
+[ 241.605] Macro HPWL 2388568
+[ 241.869] generating the augmented benchmark26
+[ 242.000] Macro HPWL 2239044
+[ 242.201] Macro HPWL 1967415
+[ 242.287] generating the augmented benchmark23
+[ 242.460] generating the augmented benchmark41
+[ 242.532] Macro HPWL 2150848
+[ 242.789] generating the augmented benchmark32
+[ 243.195] Macro HPWL 2228220
+[ 243.460] generating the augmented benchmark20
+[ 248.220] Augment cascaded macros:0,basic macros:1095
+[ 249.401] Check pass!!
+[ 249.501] Augment cascaded macros:0,basic macros:541
+[ 250.638] Check pass!!
+[ 250.814] Augment cascaded macros:0,basic macros:287
+[ 251.756] Check pass!!
+[ 252.263] Macro HPWL 2551445
+[ 252.519] generating the augmented benchmark44
+[ 253.698] Macro HPWL 2206019
+[ 254.016] generating the augmented benchmark38
+[ 254.631] Macro HPWL 2008038
+[ 254.906] generating the augmented benchmark35
+[ 258.695] Augment cascaded macros:0,basic macros:146
+[ 259.604] Check pass!!
+[ 262.486] Macro HPWL 2070087
+[ 262.750] generating the augmented benchmark52
+[ 264.084] Augment cascaded macros:0,basic macros:267
+[ 265.002] Check pass!!
+[ 265.863] Augment cascaded macros:0,basic macros:536
+[ 266.857] Check pass!!
+[ 267.825] Macro HPWL 1975365
+[ 268.095] generating the augmented benchmark47
+[ 269.722] Macro HPWL 2647520
+[ 269.988] generating the augmented benchmark55
+[ 298.822] Augment cascaded macros:0,basic macros:418
+[ 299.592] Augment cascaded macros:0,basic macros:275
+[ 299.806] Check pass!!
+[ 300.448] Augment cascaded macros:0,basic macros:1402
+[ 300.538] Check pass!!
+[ 301.848] Check pass!!
+[ 301.906] Augment cascaded macros:0,basic macros:1478
+[ 302.732] Macro HPWL 2497436
+[ 302.746] Augment cascaded macros:0,basic macros:1364
+[ 302.892] Augment cascaded macros:0,basic macros:377
+[ 303.011] generating the augmented benchmark30
+[ 303.367] Check pass!!
+[ 303.438] Macro HPWL 2235204
+[ 303.714] generating the augmented benchmark33
+[ 304.015] Check pass!!
+[ 304.166] Check pass!!
+[ 304.785] Macro HPWL 3879738
+[ 305.075] generating the augmented benchmark27
+[ 306.257] Macro HPWL 3947291
+[ 306.539] generating the augmented benchmark42
+[ 307.142] Macro HPWL 3816011
+[ 307.370] Macro HPWL 2494819
+[ 307.459] generating the augmented benchmark21
+[ 307.659] generating the augmented benchmark24
+[ 308.632] Augment cascaded macros:0,basic macros:196
+[ 309.573] Check pass!!
+[ 312.504] Macro HPWL 2156111
+[ 312.781] generating the augmented benchmark45
+[ 314.228] Augment cascaded macros:0,basic macros:1454
+[ 314.694] Augment cascaded macros:0,basic macros:638
+[ 315.659] Check pass!!
+[ 315.792] Check pass!!
+[ 318.631] Macro HPWL 3926112
+[ 318.781] Macro HPWL 2907876
+[ 318.909] generating the augmented benchmark36
+[ 319.062] generating the augmented benchmark39
+[ 325.985] Augment cascaded macros:0,basic macros:277
+[ 326.946] Check pass!!
+[ 327.719] Augment cascaded macros:0,basic macros:1261
+[ 328.507] Augment cascaded macros:0,basic macros:1496
+[ 329.077] Check pass!!
+[ 329.991] Macro HPWL 2265531
+[ 330.278] generating the augmented benchmark48
+[ 330.797] Check pass!!
+[ 331.957] Macro HPWL 3666004
+[ 335.213] Macro HPWL 4014780
+[ 369.074] Augment cascaded macros:0,basic macros:770
+[ 369.182] Augment cascaded macros:0,basic macros:1191
+[ 370.229] Check pass!!
+[ 370.482] Augment cascaded macros:0,basic macros:1557
+[ 370.515] Check pass!!
+[ 372.030] Check pass!!
+[ 373.078] Macro HPWL 2998677
+[ 373.360] generating the augmented benchmark31
+[ 373.375] Macro HPWL 3597978
+[ 373.660] generating the augmented benchmark34
+[ 374.853] Augment cascaded macros:0,basic macros:1190
+[ 374.967] Macro HPWL 4041882
+[ 375.254] generating the augmented benchmark28
+[ 375.726] Augment cascaded macros:0,basic macros:924
+[ 376.168] Check pass!!
+[ 376.917] Check pass!!
+[ 378.129] Augment cascaded macros:0,basic macros:1540
+[ 379.113] Macro HPWL 3567929
+[ 379.244] Augment cascaded macros:0,basic macros:1312
+[ 379.405] generating the augmented benchmark22
+[ 379.603] Check pass!!
+[ 379.891] Macro HPWL 3233451
+[ 380.185] generating the augmented benchmark25
+[ 380.608] Check pass!!
+[ 382.473] Macro HPWL 4047597
+[ 382.755] generating the augmented benchmark46
+[ 383.613] Macro HPWL 3751776
+[ 383.908] generating the augmented benchmark43
+[ 385.370] Augment cascaded macros:0,basic macros:752
+[ 385.995] Augment cascaded macros:0,basic macros:572
+[ 386.493] Check pass!!
+[ 387.056] Check pass!!
+[ 389.516] Macro HPWL 3051835
+[ 389.818] generating the augmented benchmark40
+[ 390.087] Macro HPWL 2814642
+[ 390.383] generating the augmented benchmark37
+[ 400.791] Augment cascaded macros:0,basic macros:730
+[ 401.925] Check pass!!
+[ 405.256] Macro HPWL 2987383
+[ 405.687] generating the augmented benchmark49
+[ 433.180] Augment cascaded macros:0,basic macros:534
+[ 433.575] Augment cascaded macros:0,basic macros:88
+[ 434.224] Check pass!!
+[ 434.532] Check pass!!
+[ 437.175] Macro HPWL 2692776
+[ 437.598] Macro HPWL 1938841
+[ 438.752] Augment cascaded macros:0,basic macros:1447
+[ 440.235] Check pass!!
+[ 440.490] Augment cascaded macros:0,basic macros:135
+[ 441.458] Check pass!!
+[ 441.820] Augment cascaded macros:0,basic macros:725
+[ 441.919] Augment cascaded macros:0,basic macros:65
+[ 442.849] Check pass!!
+[ 443.259] Check pass!!
+[ 443.348] Macro HPWL 3918027
+[ 444.643] Macro HPWL 2040798
+[ 445.822] Macro HPWL 1896766
+[ 446.741] Augment cascaded macros:0,basic macros:843
+[ 446.841] Macro HPWL 2926667
+[ 448.106] Check pass!!
+[ 451.005] Augment cascaded macros:0,basic macros:55
+[ 451.972] Macro HPWL 3127400
+[ 452.012] Check pass!!
+[ 455.301] Macro HPWL 1901756
+[ 456.520] Augment cascaded macros:0,basic macros:283
+[ 458.344] Check pass!!
+[ 462.409] Macro HPWL 2292894
+[ 464.580] Augment cascaded macros:0,basic macros:564
+[ 465.637] Check pass!!
+[ 468.796] Macro HPWL 2733559
+[ 471.065] Finish augment designDesign_181
+[ 471.066] AugmentDesign_182
+[ 471.069] loading from original benchmark...
+[ 471.069] loading cell library
+[ 471.100] Number of cells in the library:15
+[ 471.100] loading netlist
+[ 483.574] Number of nodes:566055
+[ 498.541] Number of nets:615920
+[ 498.541] loading sitemap
+[ 499.496] Size of the site map:(206,300)
+[ 499.496] Available Site:53100
+[ 499.496] loading fixed position
+[ 499.498] loading cascaded macro info
+[ 502.058] loading region constraints
+[ 502.367] Number of fix nodes:453
+[ 502.367] Number of macros:2320
+[ 502.367] Number of basic macros:2304,cascade macros:16
+[ 502.367] Number of cascade macro nodes:96
+[ 502.367] Region Constraints:0
+[ 502.367] Region Constraint Node:0
+[ 502.367] Region Constraint Macro Node:0
+[ 502.367] Region Constraint Cascade Node:0
+[ 502.367] Resource for the nodes in the circuit:LUT:256200 FF:306999 CARRY8:0 DSP48E2:1824 RAMB36E2:576 URAM288:0 IO:456 
+[ 502.367] Supply Resource in the FPGA:LUT:788160 FF:788160 CARRY8:49260 DSP48E2:2280 RAMB36E2:720 URAM288:1280 IO:33280 
+[ 503.489] loading the macro placement result from sample.pl
+[ 570.940] Macro HPWL for vivado case:1523942
+[ 570.982] generating the augmented benchmark0
+[ 573.026] generating the augmented benchmark2
+[ 575.069] generating the augmented benchmark4
+[ 577.115] generating the augmented benchmark6
+[ 579.160] generating the augmented benchmark8
+[ 581.208] generating the augmented benchmark10
+[ 583.261] generating the augmented benchmark12
+[ 585.314] generating the augmented benchmark14
+[ 587.359] generating the augmented benchmark16
+[ 589.409] generating the augmented benchmark18
+[ 591.493] generating the augmented benchmark50
+[ 593.572] generating the augmented benchmark53
+[ 595.630] generating the augmented benchmark56
+[ 630.507] Augment cascaded macros:5,basic macros:924
+[ 631.795] Check pass!!
+[ 634.612] Macro HPWL 2168944
+[ 634.843] generating the augmented benchmark1
+[ 638.539] Augment cascaded macros:13,basic macros:644
+[ 639.527] Check pass!!
+[ 641.053] Augment cascaded macros:9,basic macros:21
+[ 641.792] Augment cascaded macros:9,basic macros:702
+[ 641.873] Check pass!!
+[ 642.190] Augment cascaded macros:3,basic macros:184
+[ 642.355] Macro HPWL 1998978
+[ 642.588] generating the augmented benchmark3
+[ 642.789] Check pass!!
+[ 643.036] Check pass!!
+[ 644.418] Augment cascaded macros:3,basic macros:206
+[ 644.654] Macro HPWL 1572974
+[ 644.900] generating the augmented benchmark5
+[ 645.313] Check pass!!
+[ 645.585] Macro HPWL 2022941
+[ 645.814] Macro HPWL 1664699
+[ 645.842] generating the augmented benchmark9
+[ 645.927] Augment cascaded macros:10,basic macros:898
+[ 646.072] generating the augmented benchmark7
+[ 647.013] Check pass!!
+[ 648.051] Macro HPWL 1692144
+[ 648.227] Augment cascaded macros:9,basic macros:201
+[ 648.315] generating the augmented benchmark11
+[ 649.141] Check pass!!
+[ 649.854] Macro HPWL 2152738
+[ 650.110] generating the augmented benchmark13
+[ 651.180] Augment cascaded macros:12,basic macros:446
+[ 652.015] Macro HPWL 1689935
+[ 652.268] generating the augmented benchmark15
+[ 652.332] Check pass!!
+[ 652.959] Augment cascaded macros:10,basic macros:1141
+[ 654.171] Check pass!!
+[ 655.795] Macro HPWL 1855356
+[ 656.274] generating the augmented benchmark17
+[ 656.525] Augment cascaded macros:4,basic macros:825
+[ 657.024] Macro HPWL 2281406
+[ 657.287] generating the augmented benchmark19
+[ 657.561] Check pass!!
+[ 658.353] Augment cascaded macros:0,basic macros:1314
+[ 659.624] Check pass!!
+[ 660.272] Macro HPWL 2839013
+[ 660.520] generating the augmented benchmark54
+[ 660.739] Augment cascaded macros:0,basic macros:1114
+[ 662.010] Check pass!!
+[ 662.397] Macro HPWL 3426171
+[ 662.632] generating the augmented benchmark51
+[ 664.849] Macro HPWL 3172194
+[ 704.129] Augment cascaded macros:7,basic macros:1106
+[ 705.370] Check pass!!
+[ 706.178] Augment cascaded macros:0,basic macros:119
+[ 707.080] Check pass!!
+[ 708.272] Macro HPWL 2274707
+[ 708.560] generating the augmented benchmark20
+[ 709.989] Macro HPWL 1618591
+[ 710.246] Augment cascaded macros:13,basic macros:740
+[ 710.260] generating the augmented benchmark23
+[ 710.428] Augment cascaded macros:15,basic macros:924
+[ 711.303] Check pass!!
+[ 711.807] Check pass!!
+[ 712.441] Augment cascaded macros:2,basic macros:602
+[ 712.925] Augment cascaded macros:4,basic macros:837
+[ 713.515] Check pass!!
+[ 714.115] Check pass!!
+[ 714.195] Macro HPWL 2018808
+[ 714.481] generating the augmented benchmark29
+[ 715.108] Macro HPWL 2185538
+[ 715.398] generating the augmented benchmark32
+[ 716.205] Augment cascaded macros:0,basic macros:587
+[ 716.518] Macro HPWL 1993504
+[ 716.785] generating the augmented benchmark26
+[ 717.084] Macro HPWL 2126702
+[ 717.212] Check pass!!
+[ 717.354] generating the augmented benchmark35
+[ 718.130] Augment cascaded macros:11,basic macros:1004
+[ 719.449] Check pass!!
+[ 720.224] Macro HPWL 1947762
+[ 720.524] generating the augmented benchmark41
+[ 720.975] Augment cascaded macros:14,basic macros:1071
+[ 722.229] Check pass!!
+[ 722.622] Augment cascaded macros:6,basic macros:542
+[ 723.510] Macro HPWL 2200259
+[ 723.671] Check pass!!
+[ 723.823] generating the augmented benchmark38
+[ 725.254] Macro HPWL 2231127
+[ 725.530] generating the augmented benchmark47
+[ 725.889] Augment cascaded macros:2,basic macros:856
+[ 726.688] Macro HPWL 1929291
+[ 726.950] generating the augmented benchmark44
+[ 726.994] Check pass!!
+[ 729.956] Macro HPWL 2799099
+[ 730.242] generating the augmented benchmark52
+[ 732.288] Augment cascaded macros:13,basic macros:421
+[ 733.293] Check pass!!
+[ 736.304] Macro HPWL 2220510
+[ 736.582] generating the augmented benchmark55
+[ 774.578] Augment cascaded macros:13,basic macros:392
+[ 775.604] Check pass!!
+[ 776.693] Augment cascaded macros:5,basic macros:1603
+[ 777.973] Augment cascaded macros:6,basic macros:214
+[ 778.262] Check pass!!
+[ 778.652] Macro HPWL 2191390
+[ 778.938] generating the augmented benchmark21
+[ 778.966] Check pass!!
+[ 781.257] Macro HPWL 3634009
+[ 781.538] generating the augmented benchmark24
+[ 782.020] Macro HPWL 1909905
+[ 782.303] generating the augmented benchmark30
+[ 786.778] Augment cascaded macros:6,basic macros:1480
+[ 788.132] Augment cascaded macros:7,basic macros:1517
+[ 788.508] Augment cascaded macros:11,basic macros:1418
+[ 789.107] Check pass!!
+[ 790.380] Check pass!!
+[ 790.388] Check pass!!
+[ 791.237] Augment cascaded macros:6,basic macros:138
+[ 791.301] Augment cascaded macros:8,basic macros:1146
+[ 791.502] Augment cascaded macros:12,basic macros:313
+[ 792.196] Check pass!!
+[ 792.443] Check pass!!
+[ 792.557] Check pass!!
+[ 793.711] Macro HPWL 3581366
+[ 793.927] Macro HPWL 3493283
+[ 794.144] generating the augmented benchmark36
+[ 794.222] generating the augmented benchmark33
+[ 794.748] Macro HPWL 3603902
+[ 795.143] generating the augmented benchmark27
+[ 795.307] Macro HPWL 1749945
+[ 795.321] Macro HPWL 2030308
+[ 795.515] Macro HPWL 3177928
+[ 795.603] generating the augmented benchmark48
+[ 795.606] generating the augmented benchmark39
+[ 795.794] generating the augmented benchmark45
+[ 797.266] Augment cascaded macros:0,basic macros:1249
+[ 798.166] Augment cascaded macros:9,basic macros:182
+[ 798.776] Check pass!!
+[ 799.186] Check pass!!
+[ 801.286] Augment cascaded macros:7,basic macros:777
+[ 802.218] Macro HPWL 3301831
+[ 802.392] Macro HPWL 1861906
+[ 802.434] Check pass!!
+[ 802.543] generating the augmented benchmark42
+[ 805.471] Macro HPWL 2727999
+[ 857.600] Augment cascaded macros:16,basic macros:1259
+[ 858.003] Augment cascaded macros:9,basic macros:1222
+[ 858.976] Check pass!!
+[ 859.308] Augment cascaded macros:11,basic macros:1008
+[ 859.399] Check pass!!
+[ 860.806] Check pass!!
+[ 862.288] Macro HPWL 3281800
+[ 862.566] Macro HPWL 3311303
+[ 862.646] generating the augmented benchmark31
+[ 862.864] generating the augmented benchmark25
+[ 864.119] Augment cascaded macros:7,basic macros:1592
+[ 864.617] Macro HPWL 2998348
+[ 865.137] generating the augmented benchmark22
+[ 865.828] Augment cascaded macros:13,basic macros:636
+[ 866.410] Check pass!!
+[ 866.935] Check pass!!
+[ 869.244] Augment cascaded macros:0,basic macros:554
+[ 869.597] Macro HPWL 3678355
+[ 869.905] generating the augmented benchmark40
+[ 870.143] Macro HPWL 2541610
+[ 870.466] generating the augmented benchmark34
+[ 870.560] Check pass!!
+[ 872.471] Augment cascaded macros:9,basic macros:1592
+[ 874.314] Augment cascaded macros:16,basic macros:531
+[ 874.328] Check pass!!
+[ 874.991] Macro HPWL 2437509
+[ 875.587] Check pass!!
+[ 875.821] generating the augmented benchmark49
+[ 878.209] Augment cascaded macros:4,basic macros:943
+[ 878.797] Macro HPWL 3706745
+[ 879.058] Macro HPWL 2358640
+[ 879.227] generating the augmented benchmark46
+[ 879.368] generating the augmented benchmark37
+[ 879.491] Check pass!!
+[ 880.980] Augment cascaded macros:13,basic macros:335
+[ 882.140] Check pass!!
+[ 882.850] Macro HPWL 2900286
+[ 883.176] generating the augmented benchmark43
+[ 885.793] Macro HPWL 2061476
+[ 886.266] generating the augmented benchmark28
+[ 930.633] Augment cascaded macros:15,basic macros:575
+[ 931.747] Check pass!!
+[ 935.013] Macro HPWL 2454744
+[ 936.353] Augment cascaded macros:8,basic macros:1146
+[ 937.861] Check pass!!
+[ 939.105] Augment cascaded macros:14,basic macros:851
+[ 939.186] Augment cascaded macros:16,basic macros:283
+[ 940.167] Check pass!!
+[ 940.396] Check pass!!
+[ 941.285] Macro HPWL 3149358
+[ 943.223] Macro HPWL 2007673
+[ 943.652] Macro HPWL 2797068
+[ 944.324] Augment cascaded macros:9,basic macros:1602
+[ 945.845] Check pass!!
+[ 948.873] Macro HPWL 3651047
+[ 950.740] Augment cascaded macros:4,basic macros:922
+[ 952.035] Check pass!!
+[ 952.594] Augment cascaded macros:8,basic macros:1491
+[ 952.652] Augment cascaded macros:12,basic macros:369
+[ 953.681] Check pass!!
+[ 953.792] Augment cascaded macros:14,basic macros:242
+[ 954.123] Check pass!!
+[ 954.857] Check pass!!
+[ 955.698] Macro HPWL 2896374
+[ 957.143] Macro HPWL 2149487
+[ 957.300] Macro HPWL 3544392
+[ 957.750] Augment cascaded macros:4,basic macros:171
+[ 958.161] Macro HPWL 1928917
+[ 958.735] Check pass!!
+[ 961.875] Macro HPWL 1814480
+[ 963.791] Finish augment designDesign_182
+[ 963.792] AugmentDesign_185
+[ 963.795] loading from original benchmark...
+[ 963.795] loading cell library
+[ 963.822] Number of cells in the library:15
+[ 963.823] loading netlist
+[ 976.896] Number of nodes:575626
+[ 992.848] Number of nets:633913
+[ 992.849] loading sitemap
+[ 993.797] Size of the site map:(206,300)
+[ 993.797] Available Site:53100
+[ 993.797] loading fixed position
+[ 993.799] loading cascaded macro info
+[ 995.242] loading region constraints
+[ 995.568] Number of fix nodes:453
+[ 995.568] Number of macros:2048
+[ 995.568] Number of basic macros:2040,cascade macros:8
+[ 995.569] Number of cascade macro nodes:360
+[ 995.569] Region Constraints:0
+[ 995.569] Region Constraint Node:0
+[ 995.569] Region Constraint Macro Node:0
+[ 995.569] Region Constraint Cascade Node:0
+[ 995.569] Resource for the nodes in the circuit:LUT:256392 FF:312365 CARRY8:0 DSP48E2:1824 RAMB36E2:576 URAM288:0 IO:456 
+[ 995.569] Supply Resource in the FPGA:LUT:788160 FF:788160 CARRY8:49260 DSP48E2:2280 RAMB36E2:720 URAM288:1280 IO:33280 
+[ 996.666] loading the macro placement result from sample.pl
+[1069.753] Macro HPWL for vivado case:1554528
+[1069.796] generating the augmented benchmark0
+[1071.845] generating the augmented benchmark2
+[1073.895] generating the augmented benchmark4
+[1075.954] generating the augmented benchmark6
+[1078.011] generating the augmented benchmark8
+[1080.091] generating the augmented benchmark10
+[1082.146] generating the augmented benchmark12
+[1084.221] generating the augmented benchmark14
+[1086.279] generating the augmented benchmark16
+[1088.335] generating the augmented benchmark18
+[1090.395] generating the augmented benchmark50
+[1092.487] generating the augmented benchmark53
+[1094.543] generating the augmented benchmark56
+[1129.705] Augment cascaded macros:7,basic macros:839
+[1130.760] Check pass!!
+[1133.475] Macro HPWL 2071354
+[1133.734] generating the augmented benchmark1
+[1137.507] Augment cascaded macros:7,basic macros:917
+[1138.438] Augment cascaded macros:7,basic macros:549
+[1138.568] Check pass!!
+[1139.439] Check pass!!
+[1139.667] Augment cascaded macros:4,basic macros:266
+[1141.389] Macro HPWL 2079440
+[1141.492] Check pass!!
+[1141.647] generating the augmented benchmark3
+[1142.337] Macro HPWL 1870975
+[1142.582] generating the augmented benchmark5
+[1142.650] Augment cascaded macros:7,basic macros:113
+[1143.500] Check pass!!
+[1144.920] Augment cascaded macros:2,basic macros:361
+[1144.984] Augment cascaded macros:2,basic macros:113
+[1145.787] Check pass!!
+[1145.794] Check pass!!
+[1145.929] Macro HPWL 1749501
+[1146.190] generating the augmented benchmark9
+[1146.373] Macro HPWL 1679431
+[1146.610] generating the augmented benchmark11
+[1147.022] Augment cascaded macros:7,basic macros:164
+[1147.918] Check pass!!
+[1148.612] Macro HPWL 1811587
+[1148.662] Macro HPWL 1631143
+[1148.872] generating the augmented benchmark7
+[1148.901] generating the augmented benchmark13
+[1149.401] Augment cascaded macros:5,basic macros:300
+[1150.263] Check pass!!
+[1150.723] Macro HPWL 1724688
+[1150.978] generating the augmented benchmark17
+[1153.147] Macro HPWL 1753586
+[1153.414] generating the augmented benchmark15
+[1153.955] Augment cascaded macros:0,basic macros:621
+[1154.372] Augment cascaded macros:2,basic macros:613
+[1154.963] Check pass!!
+[1155.352] Check pass!!
+[1155.422] Augment cascaded macros:3,basic macros:665
+[1155.892] Augment cascaded macros:8,basic macros:136
+[1156.669] Check pass!!
+[1156.768] Check pass!!
+[1157.856] Macro HPWL 2450641
+[1158.106] generating the augmented benchmark54
+[1158.259] Macro HPWL 2399179
+[1158.534] generating the augmented benchmark51
+[1159.623] Macro HPWL 2003827
+[1161.418] Macro HPWL 1963401
+[1161.965] generating the augmented benchmark19
+[1204.300] Augment cascaded macros:7,basic macros:18
+[1205.195] Check pass!!
+[1208.057] Augment cascaded macros:0,basic macros:8
+[1208.122] Macro HPWL 1706105
+[1208.406] generating the augmented benchmark20
+[1208.929] Check pass!!
+[1210.319] Augment cascaded macros:1,basic macros:564
+[1211.436] Check pass!!
+[1211.914] Macro HPWL 1560656
+[1212.194] generating the augmented benchmark26
+[1213.049] Augment cascaded macros:7,basic macros:532
+[1213.978] Augment cascaded macros:1,basic macros:633
+[1214.044] Check pass!!
+[1214.917] Augment cascaded macros:0,basic macros:284
+[1215.035] Check pass!!
+[1215.096] Macro HPWL 1928676
+[1215.441] generating the augmented benchmark23
+[1215.744] Augment cascaded macros:3,basic macros:430
+[1215.820] Check pass!!
+[1216.907] Check pass!!
+[1217.094] Macro HPWL 1916260
+[1217.256] Augment cascaded macros:6,basic macros:462
+[1217.375] generating the augmented benchmark32
+[1217.741] Augment cascaded macros:0,basic macros:417
+[1218.054] Macro HPWL 1957064
+[1218.221] Check pass!!
+[1218.320] generating the augmented benchmark29
+[1218.743] Check pass!!
+[1218.761] Macro HPWL 1737406
+[1219.017] generating the augmented benchmark44
+[1220.782] Macro HPWL 1807802
+[1221.125] generating the augmented benchmark38
+[1221.189] Macro HPWL 1840553
+[1221.462] generating the augmented benchmark41
+[1222.043] Macro HPWL 1817447
+[1222.338] generating the augmented benchmark35
+[1228.360] Augment cascaded macros:4,basic macros:906
+[1229.137] Augment cascaded macros:6,basic macros:546
+[1229.791] Augment cascaded macros:1,basic macros:837
+[1229.869] Check pass!!
+[1230.544] Check pass!!
+[1230.920] Check pass!!
+[1233.785] Macro HPWL 2847069
+[1233.931] Macro HPWL 2043928
+[1234.218] generating the augmented benchmark47
+[1234.271] generating the augmented benchmark55
+[1235.280] Macro HPWL 2401994
+[1235.833] generating the augmented benchmark52
+[1273.469] Augment cascaded macros:0,basic macros:992
+[1274.690] Check pass!!
+[1277.875] Macro HPWL 2880905
+[1278.210] generating the augmented benchmark21
+[1285.630] Augment cascaded macros:4,basic macros:401
+[1286.527] Augment cascaded macros:1,basic macros:1211
+[1286.640] Check pass!!
+[1287.866] Augment cascaded macros:7,basic macros:611
+[1287.870] Check pass!!
+[1287.990] Augment cascaded macros:3,basic macros:117
+[1288.301] Augment cascaded macros:3,basic macros:1089
+[1288.561] Augment cascaded macros:4,basic macros:1407
+[1288.913] Check pass!!
+[1288.944] Check pass!!
+[1289.659] Macro HPWL 2139791
+[1289.720] Check pass!!
+[1289.943] generating the augmented benchmark33
+[1289.973] Check pass!!
+[1290.970] Macro HPWL 3134983
+[1291.283] generating the augmented benchmark45
+[1291.868] Macro HPWL 2443607
+[1292.115] Macro HPWL 1716819
+[1292.155] generating the augmented benchmark30
+[1292.424] generating the augmented benchmark24
+[1292.984] Macro HPWL 3298830
+[1293.277] generating the augmented benchmark36
+[1293.505] Macro HPWL 2991220
+[1293.819] generating the augmented benchmark27
+[1293.936] Augment cascaded macros:8,basic macros:1285
+[1295.331] Check pass!!
+[1296.560] Augment cascaded macros:8,basic macros:656
+[1297.674] Check pass!!
+[1298.493] Macro HPWL 3166657
+[1298.808] generating the augmented benchmark42
+[1300.702] Augment cascaded macros:4,basic macros:592
+[1301.053] Macro HPWL 2511294
+[1301.365] generating the augmented benchmark39
+[1301.767] Check pass!!
+[1304.765] Augment cascaded macros:8,basic macros:21
+[1304.890] Macro HPWL 2394175
+[1305.201] generating the augmented benchmark48
+[1305.810] Check pass!!
+[1309.133] Macro HPWL 1885638
+[1313.267] Augment cascaded macros:7,basic macros:1362
+[1314.633] Check pass!!
+[1317.697] Macro HPWL 3275294
+[1352.773] Augment cascaded macros:2,basic macros:354
+[1353.949] Check pass!!
+[1357.031] Macro HPWL 2130966
+[1357.337] generating the augmented benchmark22
+[1359.780] Augment cascaded macros:1,basic macros:1210
+[1361.078] Check pass!!
+[1361.203] Augment cascaded macros:1,basic macros:1011
+[1361.255] Augment cascaded macros:1,basic macros:23
+[1361.570] Augment cascaded macros:4,basic macros:772
+[1361.726] Augment cascaded macros:3,basic macros:772
+[1362.195] Check pass!!
+[1362.408] Check pass!!
+[1362.850] Check pass!!
+[1363.159] Check pass!!
+[1364.076] Macro HPWL 3116532
+[1364.366] generating the augmented benchmark31
+[1364.588] Augment cascaded macros:8,basic macros:289
+[1365.342] Macro HPWL 1580605
+[1365.436] Macro HPWL 2879233
+[1365.609] Check pass!!
+[1365.652] generating the augmented benchmark25
+[1365.731] generating the augmented benchmark37
+[1365.950] Macro HPWL 2621820
+[1366.259] generating the augmented benchmark46
+[1367.299] Macro HPWL 2650102
+[1367.741] generating the augmented benchmark34
+[1367.896] Augment cascaded macros:5,basic macros:111
+[1368.772] Macro HPWL 2035499
+[1368.823] Check pass!!
+[1369.097] generating the augmented benchmark28
+[1369.775] Augment cascaded macros:1,basic macros:1123
+[1371.018] Check pass!!
+[1371.812] Macro HPWL 1717954
+[1372.111] generating the augmented benchmark43
+[1374.073] Macro HPWL 3030014
+[1374.370] generating the augmented benchmark40
+[1385.956] Augment cascaded macros:4,basic macros:241
+[1387.017] Check pass!!
+[1390.473] Macro HPWL 1938206
+[1390.775] generating the augmented benchmark49
+[1428.147] Augment cascaded macros:7,basic macros:355
+[1429.145] Check pass!!
+[1431.472] Augment cascaded macros:1,basic macros:855
+[1432.283] Macro HPWL 2114111
+[1432.619] Check pass!!
+[1434.537] Augment cascaded macros:8,basic macros:188
+[1435.493] Check pass!!
+[1436.151] Macro HPWL 2672293
+[1436.228] Augment cascaded macros:6,basic macros:659
+[1437.292] Check pass!!
+[1438.592] Macro HPWL 1797024
+[1439.313] Augment cascaded macros:0,basic macros:394
+[1439.936] Augment cascaded macros:7,basic macros:787
+[1440.355] Check pass!!
+[1440.383] Macro HPWL 2510292
+[1440.598] Augment cascaded macros:4,basic macros:983
+[1441.135] Check pass!!
+[1441.293] Augment cascaded macros:6,basic macros:833
+[1441.794] Check pass!!
+[1442.442] Check pass!!
+[1443.486] Augment cascaded macros:6,basic macros:1032
+[1443.547] Macro HPWL 2133722
+[1444.390] Macro HPWL 2671556
+[1444.724] Check pass!!
+[1445.395] Macro HPWL 2886790
+[1445.444] Macro HPWL 2709285
+[1447.828] Macro HPWL 2986781
+[1463.148] Augment cascaded macros:8,basic macros:993
+[1464.457] Check pass!!
+[1467.722] Macro HPWL 2949873
+[1469.719] Finish augment designDesign_185
+[1469.721] AugmentDesign_186
+[1469.723] loading from original benchmark...
+[1469.723] loading cell library
+[1469.754] Number of cells in the library:15
+[1469.754] loading netlist
+[1484.306] Number of nodes:562211
+[1499.870] Number of nets:609147
+[1499.870] loading sitemap
+[1500.832] Size of the site map:(206,300)
+[1500.832] Available Site:53100
+[1500.832] loading fixed position
+[1500.834] loading cascaded macro info
+[1500.834] loading region constraints
+[1501.141] Number of fix nodes:453
+[1501.141] Number of macros:2400
+[1501.141] Number of basic macros:2400,cascade macros:0
+[1501.141] Number of cascade macro nodes:0
+[1501.141] Region Constraints:0
+[1501.141] Region Constraint Node:0
+[1501.141] Region Constraint Macro Node:0
+[1501.141] Region Constraint Cascade Node:0
+[1501.142] Resource for the nodes in the circuit:LUT:256152 FF:299501 CARRY8:0 DSP48E2:1824 RAMB36E2:576 URAM288:0 IO:456 
+[1501.142] Supply Resource in the FPGA:LUT:788160 FF:788160 CARRY8:49260 DSP48E2:2280 RAMB36E2:720 URAM288:1280 IO:33280 
+[1502.274] loading the macro placement result from sample.pl
+[1568.582] Macro HPWL for vivado case:1618835
+[1568.624] generating the augmented benchmark0
+[1570.669] generating the augmented benchmark2
+[1572.742] generating the augmented benchmark4
+[1574.788] generating the augmented benchmark6
+[1576.838] generating the augmented benchmark8
+[1578.897] generating the augmented benchmark10
+[1580.953] generating the augmented benchmark12
+[1583.008] generating the augmented benchmark14
+[1585.058] generating the augmented benchmark16
+[1587.115] generating the augmented benchmark18
+[1589.175] generating the augmented benchmark50
+[1591.252] generating the augmented benchmark53
+[1593.335] generating the augmented benchmark56
+[1625.603] Augment cascaded macros:0,basic macros:906
+[1626.665] Check pass!!
+[1629.456] Macro HPWL 2185253
+[1629.486] Augment cascaded macros:0,basic macros:785
+[1629.691] generating the augmented benchmark1
+[1630.487] Check pass!!
+[1631.616] Augment cascaded macros:0,basic macros:1015
+[1632.661] Check pass!!
+[1633.319] Macro HPWL 2111940
+[1633.551] Augment cascaded macros:0,basic macros:464
+[1633.565] generating the augmented benchmark3
+[1634.446] Check pass!!
+[1635.360] Macro HPWL 2233257
+[1635.616] generating the augmented benchmark5
+[1637.103] Macro HPWL 1940759
+[1637.299] Augment cascaded macros:0,basic macros:545
+[1637.342] generating the augmented benchmark7
+[1638.190] Check pass!!
+[1640.549] Augment cascaded macros:0,basic macros:668
+[1640.948] Macro HPWL 1968182
+[1641.187] generating the augmented benchmark9
+[1641.274] Augment cascaded macros:0,basic macros:898
+[1641.547] Check pass!!
+[1642.345] Check pass!!
+[1644.298] Macro HPWL 2032292
+[1644.531] generating the augmented benchmark11
+[1644.578] Augment cascaded macros:0,basic macros:325
+[1644.586] Augment cascaded macros:0,basic macros:440
+[1645.249] Macro HPWL 2165217
+[1645.463] Check pass!!
+[1645.481] generating the augmented benchmark13
+[1645.496] Check pass!!
+[1645.554] Augment cascaded macros:0,basic macros:683
+[1646.511] Check pass!!
+[1648.159] Macro HPWL 1841997
+[1648.191] Macro HPWL 1937029
+[1648.408] generating the augmented benchmark17
+[1648.422] generating the augmented benchmark15
+[1649.233] Macro HPWL 2033407
+[1649.504] generating the augmented benchmark19
+[1649.727] Augment cascaded macros:0,basic macros:440
+[1650.638] Check pass!!
+[1651.984] Augment cascaded macros:0,basic macros:1066
+[1653.100] Check pass!!
+[1653.308] Augment cascaded macros:0,basic macros:1452
+[1653.501] Macro HPWL 2297548
+[1653.745] generating the augmented benchmark51
+[1654.759] Check pass!!
+[1655.785] Macro HPWL 3071927
+[1656.027] generating the augmented benchmark54
+[1657.485] Macro HPWL 3414038
+[1696.942] Augment cascaded macros:0,basic macros:858
+[1698.103] Check pass!!
+[1700.708] Augment cascaded macros:0,basic macros:667
+[1701.176] Augment cascaded macros:0,basic macros:214
+[1701.244] Macro HPWL 2146017
+[1701.524] generating the augmented benchmark20
+[1701.779] Check pass!!
+[1702.121] Check pass!!
+[1703.178] Augment cascaded macros:0,basic macros:861
+[1704.451] Augment cascaded macros:0,basic macros:21
+[1704.460] Check pass!!
+[1704.707] Macro HPWL 2033946
+[1704.963] generating the augmented benchmark26
+[1705.050] Macro HPWL 1775312
+[1705.304] generating the augmented benchmark29
+[1705.331] Check pass!!
+[1707.517] Macro HPWL 2142424
+[1707.786] generating the augmented benchmark23
+[1708.183] Augment cascaded macros:0,basic macros:160
+[1708.211] Macro HPWL 1634957
+[1708.477] generating the augmented benchmark32
+[1709.060] Check pass!!
+[1711.926] Macro HPWL 1724166
+[1712.166] generating the augmented benchmark35
+[1713.933] Augment cascaded macros:0,basic macros:249
+[1714.598] Augment cascaded macros:0,basic macros:421
+[1715.559] Check pass!!
+[1715.571] Check pass!!
+[1716.360] Augment cascaded macros:0,basic macros:451
+[1717.365] Check pass!!
+[1718.497] Macro HPWL 1894130
+[1718.763] generating the augmented benchmark44
+[1718.784] Augment cascaded macros:0,basic macros:176
+[1719.679] Check pass!!
+[1720.114] Augment cascaded macros:0,basic macros:1187
+[1720.439] Macro HPWL 1904789
+[1720.602] Macro HPWL 1785566
+[1720.705] generating the augmented benchmark38
+[1720.970] generating the augmented benchmark41
+[1721.460] Check pass!!
+[1722.571] Macro HPWL 1903299
+[1722.849] generating the augmented benchmark55
+[1722.968] Augment cascaded macros:0,basic macros:718
+[1724.010] Check pass!!
+[1724.802] Macro HPWL 2326054
+[1725.070] generating the augmented benchmark47
+[1727.072] Macro HPWL 2635716
+[1727.342] generating the augmented benchmark52
+[1766.118] Augment cascaded macros:0,basic macros:221
+[1767.084] Check pass!!
+[1770.085] Macro HPWL 1971462
+[1770.373] generating the augmented benchmark21
+[1771.442] Augment cascaded macros:0,basic macros:510
+[1772.419] Augment cascaded macros:0,basic macros:92
+[1772.497] Check pass!!
+[1772.803] Augment cascaded macros:0,basic macros:648
+[1773.361] Check pass!!
+[1773.451] Augment cascaded macros:0,basic macros:869
+[1773.910] Check pass!!
+[1774.608] Check pass!!
+[1775.483] Macro HPWL 2327763
+[1775.777] generating the augmented benchmark27
+[1776.316] Macro HPWL 1747418
+[1776.595] generating the augmented benchmark30
+[1777.070] Macro HPWL 2572992
+[1777.373] generating the augmented benchmark24
+[1777.562] Macro HPWL 2782600
+[1777.846] generating the augmented benchmark33
+[1785.821] Augment cascaded macros:0,basic macros:822
+[1787.016] Check pass!!
+[1789.019] Augment cascaded macros:0,basic macros:760
+[1790.048] Macro HPWL 2768794
+[1790.119] Check pass!!
+[1790.330] generating the augmented benchmark36
+[1791.823] Augment cascaded macros:0,basic macros:1319
+[1792.647] Augment cascaded macros:0,basic macros:1675
+[1793.058] Macro HPWL 2691665
+[1793.198] Check pass!!
+[1794.282] Check pass!!
+[1794.395] Augment cascaded macros:0,basic macros:47
+[1794.945] Augment cascaded macros:0,basic macros:820
+[1795.303] Check pass!!
+[1796.079] Check pass!!
+[1796.162] Macro HPWL 3282814
+[1796.443] generating the augmented benchmark48
+[1797.186] Macro HPWL 3601209
+[1797.466] generating the augmented benchmark45
+[1798.212] Macro HPWL 1680768
+[1798.491] generating the augmented benchmark39
+[1799.035] Macro HPWL 2737039
+[1799.320] generating the augmented benchmark42
+[1799.977] Augment cascaded macros:0,basic macros:408
+[1801.412] Check pass!!
+[1805.407] Macro HPWL 2244334
+[1829.745] Augment cascaded macros:0,basic macros:1449
+[1831.228] Check pass!!
+[1834.442] Macro HPWL 3471623
+[1834.754] generating the augmented benchmark22
+[1835.900] Augment cascaded macros:0,basic macros:1168
+[1836.524] Augment cascaded macros:0,basic macros:1313
+[1837.237] Check pass!!
+[1837.907] Check pass!!
+[1840.315] Macro HPWL 3129205
+[1840.616] generating the augmented benchmark25
+[1840.844] Macro HPWL 3298262
+[1841.134] generating the augmented benchmark34
+[1841.293] Augment cascaded macros:0,basic macros:725
+[1842.439] Check pass!!
+[1843.098] Augment cascaded macros:0,basic macros:1492
+[1844.553] Check pass!!
+[1845.532] Macro HPWL 2635985
+[1845.831] generating the augmented benchmark31
+[1847.638] Macro HPWL 3403690
+[1847.950] generating the augmented benchmark28
+[1850.402] Augment cascaded macros:0,basic macros:188
+[1851.400] Check pass!!
+[1853.919] Augment cascaded macros:0,basic macros:283
+[1854.609] Macro HPWL 1889545
+[1854.919] Check pass!!
+[1854.926] generating the augmented benchmark37
+[1855.948] Augment cascaded macros:0,basic macros:1261
+[1857.190] Augment cascaded macros:0,basic macros:416
+[1857.318] Check pass!!
+[1857.930] Augment cascaded macros:0,basic macros:1248
+[1858.228] Check pass!!
+[1858.789] Macro HPWL 2057803
+[1859.261] Check pass!!
+[1859.275] generating the augmented benchmark49
+[1860.408] Macro HPWL 3261052
+[1860.709] generating the augmented benchmark46
+[1861.377] Macro HPWL 2255472
+[1861.681] generating the augmented benchmark40
+[1862.270] Macro HPWL 3213484
+[1862.591] generating the augmented benchmark43
+[1905.438] Augment cascaded macros:0,basic macros:1331
+[1905.615] Augment cascaded macros:0,basic macros:1011
+[1906.917] Check pass!!
+[1907.332] Check pass!!
+[1909.845] Augment cascaded macros:0,basic macros:572
+[1910.287] Macro HPWL 2979241
+[1910.613] Macro HPWL 3341104
+[1910.953] Check pass!!
+[1914.054] Augment cascaded macros:0,basic macros:1096
+[1914.364] Macro HPWL 2449708
+[1915.371] Check pass!!
+[1916.046] Augment cascaded macros:0,basic macros:383
+[1917.096] Check pass!!
+[1918.539] Macro HPWL 3090132
+[1920.334] Macro HPWL 2209659
+[1920.448] Augment cascaded macros:0,basic macros:839
+[1921.629] Check pass!!
+[1924.802] Macro HPWL 2740449
+[1927.926] Augment cascaded macros:0,basic macros:635
+[1927.934] Augment cascaded macros:0,basic macros:1018
+[1928.414] Augment cascaded macros:0,basic macros:442
+[1928.990] Check pass!!
+[1929.145] Check pass!!
+[1929.959] Check pass!!
+[1932.041] Macro HPWL 2507587
+[1932.221] Macro HPWL 3020016
+[1933.778] Macro HPWL 2272474
+[1934.110] Augment cascaded macros:0,basic macros:383
+[1935.119] Check pass!!
+[1938.187] Macro HPWL 2200530
+[1940.702] Finish augment designDesign_186
+[1940.703] AugmentDesign_187
+[1940.706] loading from original benchmark...
+[1940.706] loading cell library
+[1940.735] Number of cells in the library:15
+[1940.735] loading netlist
+[1952.388] Number of nodes:567146
+[1971.362] Number of nets:617064
+[1971.362] loading sitemap
+[1972.315] Size of the site map:(206,300)
+[1972.316] Available Site:53100
+[1972.316] loading fixed position
+[1972.317] loading cascaded macro info
+[1975.185] loading region constraints
+[1975.505] Number of fix nodes:453
+[1975.505] Number of macros:2320
+[1975.505] Number of basic macros:2304,cascade macros:16
+[1975.505] Number of cascade macro nodes:96
+[1975.505] Region Constraints:0
+[1975.505] Region Constraint Node:0
+[1975.505] Region Constraint Macro Node:0
+[1975.505] Region Constraint Cascade Node:0
+[1975.505] Resource for the nodes in the circuit:LUT:256200 FF:308090 CARRY8:0 DSP48E2:1824 RAMB36E2:576 URAM288:0 IO:456 
+[1975.505] Supply Resource in the FPGA:LUT:788160 FF:788160 CARRY8:49260 DSP48E2:2280 RAMB36E2:720 URAM288:1280 IO:33280 
+[1976.633] loading the macro placement result from sample.pl
+[2045.832] Macro HPWL for vivado case:1999145
+[2045.876] generating the augmented benchmark0
+[2047.927] generating the augmented benchmark2
+[2049.968] generating the augmented benchmark4
+[2052.011] generating the augmented benchmark6
+[2054.058] generating the augmented benchmark8
+[2056.115] generating the augmented benchmark10
+[2058.169] generating the augmented benchmark12
+[2060.241] generating the augmented benchmark14
+[2062.298] generating the augmented benchmark16
+[2064.341] generating the augmented benchmark18
+[2066.420] generating the augmented benchmark50
+[2068.526] generating the augmented benchmark53
+[2070.601] generating the augmented benchmark56
+[2111.620] Augment cascaded macros:11,basic macros:815
+[2112.186] Augment cascaded macros:11,basic macros:1007
+[2112.711] Check pass!!
+[2112.790] Augment cascaded macros:1,basic macros:382
+[2113.337] Check pass!!
+[2113.943] Check pass!!
+[2115.541] Macro HPWL 2454795
+[2115.791] generating the augmented benchmark1
+[2116.779] Macro HPWL 2536422
+[2117.035] generating the augmented benchmark3
+[2117.999] Macro HPWL 2224807
+[2118.361] generating the augmented benchmark5
+[2118.997] Augment cascaded macros:12,basic macros:912
+[2119.149] Augment cascaded macros:9,basic macros:264
+[2120.196] Check pass!!
+[2120.295] Check pass!!
+[2123.305] Macro HPWL 2173041
+[2123.373] Macro HPWL 2520893
+[2123.554] generating the augmented benchmark7
+[2123.654] generating the augmented benchmark9
+[2126.273] Augment cascaded macros:10,basic macros:430
+[2127.111] Augment cascaded macros:2,basic macros:294
+[2127.131] Check pass!!
+[2128.017] Check pass!!
+[2129.776] Macro HPWL 2248660
+[2130.022] generating the augmented benchmark15
+[2131.463] Macro HPWL 2168246
+[2131.803] generating the augmented benchmark11
+[2134.174] Augment cascaded macros:14,basic macros:584
+[2135.366] Check pass!!
+[2135.828] Augment cascaded macros:14,basic macros:675
+[2137.132] Check pass!!
+[2138.603] Augment cascaded macros:9,basic macros:563
+[2139.008] Macro HPWL 2335306
+[2139.397] generating the augmented benchmark13
+[2140.054] Check pass!!
+[2140.489] Augment cascaded macros:7,basic macros:594
+[2140.877] Macro HPWL 2409947
+[2141.244] generating the augmented benchmark17
+[2141.844] Check pass!!
+[2141.988] Augment cascaded macros:12,basic macros:1517
+[2143.681] Augment cascaded macros:9,basic macros:1391
+[2144.299] Macro HPWL 2325950
+[2144.432] Check pass!!
+[2144.625] generating the augmented benchmark19
+[2144.853] Macro HPWL 2746701
+[2145.303] Check pass!!
+[2148.242] Macro HPWL 3614273
+[2148.417] Macro HPWL 3536021
+[2148.481] generating the augmented benchmark51
+[2148.662] generating the augmented benchmark54
+[2189.420] Augment cascaded macros:3,basic macros:419
+[2190.424] Check pass!!
+[2192.919] Augment cascaded macros:0,basic macros:1143
+[2193.826] Macro HPWL 2226600
+[2194.119] generating the augmented benchmark23
+[2194.187] Check pass!!
+[2195.541] Augment cascaded macros:12,basic macros:839
+[2196.666] Check pass!!
+[2197.412] Macro HPWL 2614163
+[2197.698] generating the augmented benchmark26
+[2198.414] Augment cascaded macros:16,basic macros:582
+[2198.933] Augment cascaded macros:6,basic macros:672
+[2199.737] Check pass!!
+[2199.988] Check pass!!
+[2200.700] Macro HPWL 2461801
+[2201.188] generating the augmented benchmark29
+[2202.935] Macro HPWL 2367796
+[2203.226] generating the augmented benchmark32
+[2203.502] Macro HPWL 2337865
+[2203.838] generating the augmented benchmark20
+[2207.311] Augment cascaded macros:4,basic macros:685
+[2208.565] Check pass!!
+[2209.236] Augment cascaded macros:13,basic macros:822
+[2211.229] Check pass!!
+[2213.371] Macro HPWL 2405532
+[2213.796] generating the augmented benchmark41
+[2214.853] Augment cascaded macros:5,basic macros:745
+[2216.167] Check pass!!
+[2216.880] Macro HPWL 2455838
+[2217.401] generating the augmented benchmark35
+[2220.637] Macro HPWL 2923886
+[2220.681] Augment cascaded macros:7,basic macros:505
+[2220.925] Augment cascaded macros:1,basic macros:934
+[2220.970] generating the augmented benchmark55
+[2222.101] Check pass!!
+[2222.323] Check pass!!
+[2223.458] Augment cascaded macros:13,basic macros:1345
+[2225.680] Check pass!!
+[2225.832] Macro HPWL 2315376
+[2226.172] generating the augmented benchmark38
+[2226.494] Macro HPWL 2506222
+[2226.788] generating the augmented benchmark44
+[2227.364] Augment cascaded macros:16,basic macros:986
+[2228.876] Check pass!!
+[2230.889] Macro HPWL 3485327
+[2231.426] generating the augmented benchmark52
+[2233.221] Macro HPWL 2521322
+[2233.726] generating the augmented benchmark47
+[2260.079] Augment cascaded macros:3,basic macros:1131
+[2261.405] Check pass!!
+[2263.726] Augment cascaded macros:7,basic macros:847
+[2264.562] Macro HPWL 3336531
+[2264.852] generating the augmented benchmark24
+[2264.968] Check pass!!
+[2268.117] Macro HPWL 2994830
+[2268.427] generating the augmented benchmark27
+[2269.191] Augment cascaded macros:6,basic macros:345
+[2270.206] Check pass!!
+[2273.190] Macro HPWL 2480857
+[2273.476] generating the augmented benchmark33
+[2291.169] Augment cascaded macros:11,basic macros:362
+[2292.152] Check pass!!
+[2295.111] Macro HPWL 2486513
+[2296.748] Augment cascaded macros:2,basic macros:640
+[2298.079] Check pass!!
+[2298.434] Augment cascaded macros:10,basic macros:413
+[2298.581] Augment cascaded macros:2,basic macros:737
+[2299.650] Check pass!!
+[2299.735] Check pass!!
+[2301.036] Augment cascaded macros:9,basic macros:1440
+[2302.268] Macro HPWL 2790585
+[2302.450] Check pass!!
+[2302.617] generating the augmented benchmark21
+[2303.105] Macro HPWL 2889890
+[2303.120] Macro HPWL 2548948
+[2303.397] generating the augmented benchmark36
+[2303.412] generating the augmented benchmark30
+[2305.435] Macro HPWL 3615884
+[2306.880] Augment cascaded macros:4,basic macros:153
+[2308.050] Check pass!!
+[2308.244] Augment cascaded macros:12,basic macros:399
+[2309.335] Check pass!!
+[2312.056] Augment cascaded macros:11,basic macros:537
+[2312.259] Macro HPWL 2227509
+[2312.534] Macro HPWL 2562564
+[2312.681] generating the augmented benchmark39
+[2312.850] generating the augmented benchmark42
+[2313.684] Check pass!!
+[2317.882] Macro HPWL 2679400
+[2318.219] Augment cascaded macros:16,basic macros:328
+[2318.220] generating the augmented benchmark45
+[2319.521] Check pass!!
+[2323.723] Macro HPWL 2391330
+[2324.087] generating the augmented benchmark48
+[2336.079] Augment cascaded macros:4,basic macros:566
+[2337.157] Check pass!!
+[2340.163] Augment cascaded macros:15,basic macros:323
+[2340.234] Macro HPWL 2689179
+[2340.517] generating the augmented benchmark28
+[2340.786] Augment cascaded macros:0,basic macros:5
+[2341.137] Check pass!!
+[2342.022] Check pass!!
+[2344.158] Macro HPWL 2468409
+[2344.442] generating the augmented benchmark34
