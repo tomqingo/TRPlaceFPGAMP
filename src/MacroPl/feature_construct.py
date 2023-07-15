@@ -31,7 +31,7 @@ class FeatureExtractor:
 
             #Number of nets connecting between this macro and other cells (macros and LUT/FF)
             connmacronum = len(placementunit.placementnetidcol)
-            externalconn = connmacronum + placementunit.connNonmacronum
+            externalconn = placementunit.externalnetnum
             connNonmacronum = placementunit.connNonmacronum
             internalconn = placementunit.internalnetnum
             node_feature.extend([externalconn, internalconn, connmacronum, connNonmacronum])
@@ -79,3 +79,24 @@ class FeatureExtractor:
                         output_str += str(placementunit_j)
                         output_str += "\n"
             f_link.write(output_str)
+    
+    def OutputPlacementUnitNode(self, output_path):
+        with open(output_path, "w") as f_unit:
+            output_str = ""
+            for id in range(len(self.placementinfo.placementunits)):
+                placementunit = self.placementinfo.placementunits[id]
+                nodidcol = placementunit.getNodeSet()
+                nodes = self.placementinfo.database.nodes
+                output_str += ("Placement Unit "+str(id)+" Begin")
+                output_str += "\n"
+                for nodeid in nodidcol:
+                    nodeper = nodes[nodeid]
+                    output_str += nodeper.name
+                    output_str += "\n"
+                output_str += ("Placement Unit "+str(id)+" End")
+                output_str += "\n"
+            
+            f_unit.write(output_str)
+
+
+

@@ -410,7 +410,9 @@ class Dataset:
         logger.info("random generated macro placement results")
         restype_loc = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
         
-        region_slack = 10
+        left_right_region_slack = 1.0
+        up_down_region_slack = 5.0
+
         for id in range(len(self.sites)):
             for j in range(len(list(self.sites[id].resource_supply.keys()))):
                 res_name = list(self.sites[id].resource_supply.keys())[j]
@@ -483,7 +485,7 @@ class Dataset:
                 locX = site.locX
                 locY = site.locY
                 self.nodes[nodeid].SetPlaceLocation(locX, locY, siteid)
-                if self.nodes[nodeid].IsinRegionConstr(region_slack):
+                if self.nodes[nodeid].IsinRegionConstr(left_right_region_slack, up_down_region_slack):
                     candidate_in_RegionConstr.append(siteid)
                 self.nodes[nodeid].ReturnToDefaultPlaceLocation()
             if len(candidate_in_RegionConstr) == 0:
@@ -524,7 +526,8 @@ class Dataset:
         restype_loc = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
         restype_col = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
         col2loc = {}
-        region_slack = 10 # The slack distance from the region
+        left_right_region_slack = 1.0 # The slack distance from the region left/right boundary
+        up_down_region_slack = 5.0 # The slack distance from the region up/down boundary
 
         for id in range(len(self.sites)):
             col_id = self.sites[id].locX
@@ -721,7 +724,7 @@ class Dataset:
                     #if macro_locX == site_locX and macro_locY == site_locY:
                     #    continue
                     self.nodes[nodeid].ReSetPlaceLocation(site_locX, site_locY, site_id)
-                    if not self.nodes[nodeid].IsinRegionConstr(region_slack):
+                    if not self.nodes[nodeid].IsinRegionConstr(left_right_region_slack, up_down_region_slack):
                         self.nodes[nodeid].ReSetPlaceLocation(macro_locX, macro_locY, macro_siteid)
                         continue
                     self.nodes[nodeid].ReSetPlaceLocation(macro_locX, macro_locY, macro_siteid)

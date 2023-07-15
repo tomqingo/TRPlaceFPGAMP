@@ -10,6 +10,7 @@ class PlacementUnit:
         self.nodeidcol = []
         self.placementnetidcol = []
         self.internalnetnum = 0
+        self.externalnetnum = 0
         self.connNonmacronum = 0
         #location
         self.locX = 0
@@ -22,6 +23,9 @@ class PlacementUnit:
     def setLocation(self, locX, locY):
         self.locX = locX
         self.locY = locY
+    
+    def getNodeSet(self):
+        return self.nodeidcol
     
     def isBRAM(self):
         return ("RAMB" in self.macrotype)
@@ -83,10 +87,10 @@ class PlacementInfo:
         for id in range(len(self.database.nets)):
             net = self.database.nets[id]
             placementnet_inst = PlacementNet(placementnet_id)
+            flag_connto_nonmacro = False
+            pindict = {}
             for pin_id in range(len(net.pins)):
-                flag_connto_nonmacro = False
                 node_adj_id = net.pins[pin_id][0]
-                pindict = {}
                 if node_adj_id in list(self.nodeId2placementunitId.keys()):
                     placementunit_id = self.nodeId2placementunitId[node_adj_id]
                     if not placementunit_id in list(pindict.keys()):
@@ -99,13 +103,18 @@ class PlacementInfo:
             if placementnet_inst.pinnum == 1:
                 if flag_connto_nonmacro:
                     self.placementunits[placementnet_inst.placementunitidcol[0]].connNonmacronum += 1
+                    self.placementunits[placementnet_inst.placementunitidcol[0]].externalnetnum += 1
                 else:
-                    self.placementunits[placementnet_inst.placementunitidcol[0]].internalnetnum += 1
+                    if len(net.pins) != 1:
+                        self.placementunits[placementnet_inst.placementunitidcol[0]].internalnetnum += 1
                 continue
             self.placementnets.append(placementnet_inst)
             for pinid in range(placementnet_inst.pinnum):
                 placementunit_id = placementnet_inst.placementunitidcol[pinid]
                 self.placementunits[placementunit_id].placementnetidcol.append(id)
+                self.placementunits[placementunit_id].externalnetnum += 1
+                if flag_connto_nonmacro:
+                    self.placementunits[placementunit_id].connNonmacronum += 1
             placementnet_id += 1
         logger.info("Num of Placement Nets: {}".format(placementnet_id))
 

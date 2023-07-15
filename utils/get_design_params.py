@@ -65,6 +65,8 @@ def single_mlcad2023(dataset_root, design_name, placement=None):
         #"sample": "/data/ssd/qluo/benchmark/checkpoint/design_2/solution_v2.pl",
         #"sample": "/data/ssd/qluo/cumple/result/8/log/Design_2/solution.pl",
         "sample_dir": "/data/ssd/qluo/benchmark/checkpoint/place_results/%s/" % design_name,  
+        #"sample_dir": "/data/ssd/qluo/benchmark/checkpoint/place_results_test/design_5/",
+        #"sample_dir": "/data/ssd/qluo/benchmark/mlcad2023_v2/%s/netlist_feature" % design_name,
         "design_name":design_name,
     }
     #print(params)

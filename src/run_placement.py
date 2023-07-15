@@ -10,14 +10,17 @@ def run_placement_main(args, logger):
     # Load Dataset
     dataset = load_dataset(args, logger)
     # Convert the dataset to the placementinfo (integrating simple and cascade macros)
-    # placementinfo = PlacementInfo(dataset)
-    # placementinfo.Convert2PlacementInfo(logger)
+    logger.info("Generate the netlist feature for:"+args.design_name)
+    #placementinfo = PlacementInfo(dataset)
+    #placementinfo.Convert2PlacementInfo(logger)
     # Extract the initial feature for each placement unit
-    # feature_extractor = FeatureExtractor(placementinfo)
-    # output_path = os.path.join(args.result_dir, args.exp_id, args.log_dir, args.design_name, "out1_node_feature_label.txt")
-    # feature_extractor.OutputNodeFeature(output_path)
-    # output_path = os.path.join(args.result_dir, args.exp_id, args.log_dir, args.design_name, "out1_graph_edges.txt")
-    # feature_extractor.OutputNodelink(output_path)    
+    #feature_extractor = FeatureExtractor(placementinfo)
+    #output_path = os.path.join(dataset.params["sample_dir"], "PU_feature.txt")
+    #feature_extractor.OutputNodeFeature(output_path)
+    #output_path = os.path.join(dataset.params["sample_dir"], "PU_link.txt")
+    #feature_extractor.OutputNodelink(output_path)    
+    #output_path = os.path.join(dataset.params["sample_dir"], "PU_info.txt")
+    #feature_extractor.OutputPlacementUnitNode(output_path)
     # Run Macro Placement
     if args.random_place:
         dataset.RandomCordGenerate(logger)

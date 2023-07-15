@@ -37,15 +37,15 @@ class Node:
         else:
             return False
     
-    def IsinRegionConstr(self, region_slack=0):
+    def IsinRegionConstr(self, left_right_region_slack=0, up_down_region_slack=0):
         if self.regionconstr_type == -1:
             return True
         else:
             for constrid in range(len(self.regionconstr)):
-                XLo = self.regionconstr[constrid][0]+region_slack
-                YLo = self.regionconstr[constrid][1]+region_slack
-                XHi = self.regionconstr[constrid][2]-region_slack
-                YHi = self.regionconstr[constrid][3]-region_slack
+                XLo = self.regionconstr[constrid][0]+left_right_region_slack
+                YLo = self.regionconstr[constrid][1]+up_down_region_slack
+                XHi = self.regionconstr[constrid][2]-left_right_region_slack
+                YHi = self.regionconstr[constrid][3]-up_down_region_slack
                 if (self.locX>=XLo and self.locX<=XHi) and (self.locY>=YLo and self.locY<=YHi):
                     return True
             return False
