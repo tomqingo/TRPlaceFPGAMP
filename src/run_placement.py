@@ -10,7 +10,7 @@ def run_placement_main(args, logger):
     # Load Dataset
     dataset = load_dataset(args, logger)
     # Convert the dataset to the placementinfo (integrating simple and cascade macros)
-    logger.info("Generate the netlist feature for:"+args.design_name)
+    # logger.info("Generate the netlist feature for:"+args.design_name)
     #placementinfo = PlacementInfo(dataset)
     #placementinfo.Convert2PlacementInfo(logger)
     # Extract the initial feature for each placement unit
@@ -32,10 +32,10 @@ def run_placement_main(args, logger):
     totalMacroHPWL = dataset.calMacroHPWL()
     logger.info("Macro HPWL: {}".format(totalMacroHPWL))
     # Output the placement result
-    # output_path = os.path.join(args.result_dir, args.exp_id, args.log_dir, args.design_name, "solution.pl")
-    # if not os.path.exists(os.path.dirname(output_path)):
-    #    os.makedirs(os.path.dirname(output_path))
-    # dataset.OutputSolutionpl(output_path)
+    output_path = os.path.join(args.dataset_root, args.design_name, "macroplacement.pl")
+    if not os.path.exists(os.path.dirname(output_path)):
+        os.makedirs(os.path.dirname(output_path))
+    dataset.OutputSolutionpl(output_path)
     # draw the placement result by inherent visulization tool
     # draw_macro_placement_result(args, dataset, logger)
     design_info = (dataset.num_nodes, dataset.num_nets, dataset.num_macro, dataset.num_basic_macro, dataset.num_cascade_macro, dataset.num_cascade_node, dataset.num_fix, dataset.num_region_constr, dataset.num_region_constr_node, dataset.num_region_constr_maceonode, dataset.num_region_constr_cascademaceonode)

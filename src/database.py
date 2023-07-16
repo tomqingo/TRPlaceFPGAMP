@@ -193,6 +193,8 @@ class Dataset:
                             for subid in range(1,len(cur_line_col)):
                                 new_resource.AddCelltype(cur_line_col[subid])
                                 self.ResourceCellMap[cur_line_col[subid]] = resource_type_id
+                            if cur_line_col[0] == "FF":
+                                self.ResourceCellMap["FDSE"] = resource_type_id
                             id = id + 1
                             self.resources.append(new_resource)
                             self.ResourceIdMap[resource_type_id] = new_resource
@@ -343,6 +345,20 @@ class Dataset:
                             sub_cur_line_col = sub_cur_line.strip().split()
                             new_constr.AddBox(int(sub_cur_line_col[1]), int(sub_cur_line_col[2]), int(sub_cur_line_col[3]), int(sub_cur_line_col[4]))
                             id = id + 1
+                        for siteid in range(len(self.sites)):
+                            site = self.sites[siteid]
+                            Xcorr = site.locX
+                            Ycorr = site.locY
+                            sitetypename = site.sitetype
+                            left_right_boundary_slack = 1
+                            if "BRAM" in sitetypename:
+                                up_down_boundary_slack = 5
+                            elif "DSP" in sitetypename:
+                                up_down_boundary_slack = 3
+                            else:
+                                up_down_boundary_slack = 1
+                            if(new_constr.IsinRegion(Xcorr, Ycorr, left_right_boundary_slack, up_down_boundary_slack)):
+                                new_constr.AddSite(site)
                         self.regionconstrtype.append(new_constr)
                         id = id + 1
                     elif cur_line_col[0] == "InstanceToRegionConstraintMapping" and cur_line_col[1] == "BEGIN":
@@ -357,6 +373,8 @@ class Dataset:
                                 cur_line_col[0] = sub_cur_line_col[0] + "/" + sub_cur_line_col[1]
                             nodeid = self.nodeNameIdMap[cur_line_col[0]]
                             self.nodes[nodeid].regionconstr_type = int(cur_line_col[1])
+                            #print(self.nodes[nodeid].name, self.nodes[nodeid].resourcetype)
+                            self.regionconstrtype[int(cur_line_col[1])].AddNode(self.nodes[nodeid])
                             self.nodes[nodeid].regionconstr.extend(self.regionconstrtype[int(cur_line_col[1])].constrcol)
                             if self.nodes[nodeid].is_macro:
                                 self.macronodeswithRegionConstr.append(nodeid)
@@ -407,7 +425,7 @@ class Dataset:
 
 
     def RandomCordGenerate(self, logger):
-        logger.info("random generated macro placement results")
+        logger.info("generated macro placement results")
         restype_loc = {"LUT":[], "FF":[], "CARRY8":[], "DSP48E2":[], "RAMB36E2":[], "URAM288":[], "IO":[]}
         
         left_right_region_slack = 1.0
@@ -426,7 +444,11 @@ class Dataset:
             nodecol = macro.Macronodecol
             macrolength = len(nodecol)
             reference_node = nodecol[0]
-            
+            left_right_region_slack = 1
+            if reference_node.resourcetype == "RAMB36E2":
+                up_down_region_slack = 5
+            elif reference_node.resourcetype == "DSP48E2":
+                up_down_region_slack = 3
             flag = False
             while not flag:
                 uram_cnt = 0
@@ -446,13 +468,16 @@ class Dataset:
                         else:
                             immed_site_id = place_site_id+j
                         X_immed = self.sites[immed_site_id].locX
+                        Y_immed = self.sites[immed_site_id].locY
                         if self.sites[immed_site_id].CheckIsFull(reference_node.resourcetype):
                             subflag = False
                             break
                         if X_immed != X_ref:
                             subflag = False
                             break
-                    
+                        if self.checkRegionFull(reference_node.resourcetype, X_immed, Y_immed, left_right_region_slack, up_down_region_slack):
+                            subflag = False
+                            break
 
                     if subflag:
                         uram_cnt = 0
@@ -469,6 +494,10 @@ class Dataset:
                             self.nodes[nodeid].SetPlaceLocation(immed_site_X, immed_site_Y, immed_site_id)
                             self.cascademacros[id].Macronodecol[j].SetPlaceLocation(immed_site_X, immed_site_Y, immed_site_id)
                             self.sites[immed_site_id].addNode(self.nodes[nodeid])
+                            for regionid in range(len(self.regionconstrtype)):
+                                region = self.regionconstrtype[regionid]
+                                if(region.IsinRegion(immed_site_X, immed_site_Y, left_right_region_slack, up_down_region_slack)):
+                                    self.regionconstrtype[regionid].AddNode(self.nodes[nodeid])
                             if immed_site_id in restype_loc[reference_node.resourcetype]:
                                 restype_loc[reference_node.resourcetype].remove(immed_site_id)
                     else:
@@ -497,15 +526,16 @@ class Dataset:
                 logger.info("The Nonmacro Node with regional constraints could not find feasible place!!")
             
             flag = False
-            while not flag:
-                place_site_id = choice(candidate_in_RegionConstr)
-                if not self.sites[place_site_id].CheckIsFull(self.nodes[nodeid].resourcetype):
-                    locX = self.sites[place_site_id].locX
-                    locY = self.sites[place_site_id].locY
-                    self.nodes[nodeid].SetPlaceLocation(locX,locY,place_site_id)
-                    self.sites[place_site_id].addNode(self.nodes[nodeid])
-                    restype_loc[self.nodes[nodeid].resourcetype].remove(place_site_id)
-                    flag = True
+            if len(candidate_in_RegionConstr) > 0:
+                while not flag:
+                    place_site_id = choice(candidate_in_RegionConstr)
+                    if not self.sites[place_site_id].CheckIsFull(self.nodes[nodeid].resourcetype):
+                        locX = self.sites[place_site_id].locX
+                        locY = self.sites[place_site_id].locY
+                        self.nodes[nodeid].SetPlaceLocation(locX,locY,place_site_id)
+                        self.sites[place_site_id].addNode(self.nodes[nodeid])
+                        restype_loc[self.nodes[nodeid].resourcetype].remove(place_site_id)
+                        flag = True
 
         # Nonmacrocascade nodes with no regional constraints 
         for id in range(len(self.nodes)):
@@ -560,6 +590,7 @@ class Dataset:
 
         # choose the cascaded macros to be replaced in a range
         macro_candidate = self.cascademacros[:]
+        #macro_candidate = []
         id = 0
         while len(macro_candidate) > 0 and id < num_cascade_macro_adjust:
             candidate_id = choice(list(range(len(macro_candidate))))
@@ -567,6 +598,10 @@ class Dataset:
             macroid = macro.id
             macro_reference_id = macro.reference_node
             macro_res_type = self.nodes[macro_reference_id].resourcetype
+            if macro_res_type == "RAMB36E2":
+                up_down_region_slack = bram_up_down_region_slack
+            elif macro_res_type == "DSP48E2":
+                up_down_region_slack = dsp_up_down_region_slack
             nodecol = macro.Macronodecol
             macrolength = len(nodecol)
             Xcorr_macro = self.nodes[macro_reference_id].locX
@@ -601,13 +636,17 @@ class Dataset:
                             immed_site_id = site_id+j
                         
                         X_immed = self.sites[immed_site_id].locX
+                        Y_immed = self.sites[immed_site_id].locY
                         if self.sites[immed_site_id].CheckIsFull(macro_res_type):
                             subflag = False
                             break
                         if X_immed != Xcorr_site_current:
                             subflag = False
                             break
-                    
+                        if self.checkRegionFull(macro_res_type, X_immed, Y_immed, left_right_region_slack, up_down_region_slack):
+                            subflag = False
+                            break
+                                    
                     if subflag:
                         site_candidate.append(site_id)
             
@@ -636,6 +675,10 @@ class Dataset:
                 self.cascademacros[macroid].Macronodecol[j].ReSetPlaceLocation(immed_site_X, immed_site_Y, immed_site_id)
                 self.sites[immed_site_id].addNode(self.nodes[nodeid])
                 #print(macro.name, self.nodes[nodeid].id, self.nodes[nodeid].name, self.sites[immed_site_id_org].nodecol, immed_site_id_org)
+                for regionid in range(len(self.regionconstrtype)):
+                    region = self.regionconstrtype[regionid]
+                    if(region.IsinRegion(immed_site_X, immed_site_Y, left_right_region_slack, up_down_region_slack)):
+                        self.regionconstrtype[regionid].AddNode(self.nodes[nodeid])
                 self.sites[immed_site_id_org].removeNode(self.nodes[nodeid])
                 if immed_site_id in restype_loc[macro_res_type]:
                     restype_loc[macro_res_type].remove(immed_site_id)
@@ -722,7 +765,7 @@ class Dataset:
             macro_locY = self.nodes[nodeid].locY
             macro_siteid = self.nodes[nodeid].site
             macro_res_type = self.nodes[nodeid].resourcetype
-            while len(site_candidate) == 0:
+            while len(site_candidate) == 0 and init_displacement_thres < 1000:
                 for site_id in restype_loc[macro_res_type]:
                     site_current = self.sites[site_id]
                     site_locX = self.sites[site_id].locX
@@ -741,13 +784,18 @@ class Dataset:
                     if abs(macro_locX - site_locX) + abs(macro_locY - site_locY) <= init_displacement_thres:
                         site_candidate.append(site_id)
                 init_displacement_thres = init_displacement_thres * 1.5
-            placed_site_id = choice(site_candidate)
-            placed_X = self.sites[placed_site_id].locX
-            placed_Y = self.sites[placed_site_id].locY
-            self.nodes[nodeid].ReSetPlaceLocation(placed_X, placed_Y, placed_site_id)
-            self.sites[placed_site_id].addNode(self.nodes[nodeid])
-            restype_loc[macro_res_type].remove(placed_site_id)
-            col2loc[placed_X].remove(placed_site_id)
+            
+            if len(site_candidate) > 0:
+                placed_site_id = choice(site_candidate)
+                placed_X = self.sites[placed_site_id].locX
+                placed_Y = self.sites[placed_site_id].locY
+                self.nodes[nodeid].ReSetPlaceLocation(placed_X, placed_Y, placed_site_id)
+                self.sites[placed_site_id].addNode(self.nodes[nodeid])
+                restype_loc[macro_res_type].remove(placed_site_id)
+                col2loc[placed_X].remove(placed_site_id)
+            else:
+                place_id = self.nodes[nodeid].site
+                self.sites[place_id].addNode(self.nodes[nodeid])
 
 
         # Randomly find the corresponding place for each non-region_constrained node
@@ -770,6 +818,7 @@ class Dataset:
                     if abs(macro_locX - site_locX) + abs(macro_locY - site_locY) <= init_displacement_thres:
                         site_candidate.append(site_id)
                 init_displacement_thres = init_displacement_thres * 1.5
+            
             placed_site_id = choice(site_candidate)
             placed_X = self.sites[placed_site_id].locX
             placed_Y = self.sites[placed_site_id].locY
@@ -777,6 +826,16 @@ class Dataset:
             self.sites[placed_site_id].addNode(self.nodes[nodeid])
             restype_loc[macro_res_type].remove(placed_site_id)
             col2loc[placed_X].remove(placed_site_id)
+    
+    def checkRegionFull(self, restype, Xcorr, Ycorr, left_right_boundary_slack, up_down_boundary_slack):
+        flag_RegionFull = False
+        for id in range(len(self.regionconstrtype)):
+            region = self.regionconstrtype[id]
+            if region.IsinRegion(Xcorr, Ycorr, left_right_boundary_slack, up_down_boundary_slack):
+                if region.CheckIsFull(restype):
+                    flag_RegionFull = True
+        return flag_RegionFull
+
     
     def calMacroHPWL(self):
         totalMacroHPWL = 0

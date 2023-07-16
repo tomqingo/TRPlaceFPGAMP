@@ -3,15 +3,15 @@ import pdb
 
 def find_benchmark(dataset_root, benchmark):
     bm_to_root = {
-        "mlcad2023": os.path.join(dataset_root, "mlcad2023_v2")
+        "mlcad2023": dataset_root
     }
     root = bm_to_root[benchmark]
     # Firstly exclude some testcases from the benchmark
     # uram_benchmark = [3,4,8,9,13,14,18,19,23,24,28,29,33,34,39,38,43,44,48,49,63,64,68,69,73,74,78,79,83,84,88,89,93,94,98,99,103,104,123,124,128,129,133,134,138,139,143,144,148,149,153,154,158,159,183,184,188,189,193,194,198,199,203,204,208,209,213,214,218,219,223,224]
     #benchmark_ignore = [106,107,110,111,112,115,116,117,161,162,165,166,167,170,171,172,175,176,180,226,227,230,231,232,235,236,240,51,52,55,56,57,60]
     benchmark_ignore = []
-    for id in range(181):
-        benchmark_ignore.append(id)
+    #for id in range(0,176):
+    #benchmark_ignore.append(id)
     #uram_benchmark_str = []
     benchmark_ignore_str = []
     #for id in range(len(uram_benchmark)):
