@@ -1,0 +1,14 @@
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=12234 --use_env run_train.py \
+--diff_steps 2000 \
+--lr 0.0001 \
+--learning_steps 500000 \
+--save_interval 10000 \
+--seed 1020 \
+--noise_schedule sqrt \
+--hidden_dim 128 \
+--bsz 64 \
+--microbatch 64 \
+--seq_len 2282 \
+--schedule_sampler lossaware \
+--device "cuda:0" \
+--resume_checkpoint None
