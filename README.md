@@ -58,15 +58,15 @@ utils: Some extra function like logger, get the params of the benchmark
 
 # How to run
 ~~~
-$ python3 main.py --dataset_root <benchmark_root> --dataset <dataset_name> --design_name <design_name> --run_all <run_all_designs_flag> --random_place <run_randomplace_or_samplePL_flag>
+$ python3 main.py --dataset_root <benchmark_root> --dataset <dataset_name> --design_name <design_name> --solution <pathToSolution> --run_all <run_all_designs_flag> --random_place <run_randomplace_or_samplePL_flag>
 ~~~
-If we want to run all the designs in mlcad2023 using sample.pl
+If we want to run the Design_12 in mlcad2023_v2 using the macro placement solution in /data/ssd/qluo/docker_practice/Cumple/DiffMP/result/Design_12_solution.pl
 ~~~
-$ python3 main.py --dataset_root /data/ssd/qluo/benchmark --dataset mlcad2023 --run_all True --random_place False
+$ python3 main.py --dataset_root /data/ssd/qluo/benchmark/mlcad2023_v2 --dataset mlcad2023 --solution /data/ssd/qluo/docker_practice/Cumple/DiffMP/result/Design_12_solution.pl --run_all False --random_place False
 ~~~
-If we want to run all the Design_105 in mlcad2023 using randomly placement
+If we want to run all the cases in mlcad2023_v2 using randomly placement
 ~~~
-$ python3 main.py --dataset_root /data/ssd/qluo/benchmark --dataset mlcad2023 --design_name Design_105 --run_all False --random_place True
+$ python3 main.py --dataset_root /data/ssd/qluo/benchmark/mlcad_v2 --dataset mlcad2023 --run_all True --random_place True
 ~~~
 
 ### Dependencies

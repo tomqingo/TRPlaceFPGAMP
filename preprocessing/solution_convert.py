@@ -4,8 +4,8 @@ import os
 
 def get_option():
 	parser = argparse.ArgumentParser("Extract Macro Location")
-	parser.add_argument("--input_dir", type=str, default="/data/ssd/qluo/benchmark/mlcad2023/Design_1/place_results/", help="the folder for the initial placement results")
-	parser.add_argument("--output_dir", type=str, default="/data/ssd/qluo/benchmark/checkpoint/place_results/Design_1/", help="the folder for the output placement results")
+	parser.add_argument("--input_dir", type=str, default="/data/ssd/qluo/benchmark/mlcad2023_v2/Design_2/place_results/", help="the folder for the initial placement results")
+	parser.add_argument("--output_dir", type=str, default="/data/ssd/qluo/benchmark/mlcad2023_v2/Design_2/solution/", help="the folder for the output placement results")
 	args = parser.parse_args()
 	return args
 
@@ -30,6 +30,12 @@ def Convert(solution_pl_org_path, solution_pl_path):
 
 			X_corr = Xtile_Xccorr_conversion[X_tile]
 
+			if "CASCADE" in macro_name:
+				macro_name_col = macro_name.split("/")
+				if "BRAM_CASCADE" in macro_name_col[0] and (macro_name_col[-1]!="RAMB36E2_inst"):
+					continue
+				if "DSP_CASCADE" in macro_name_col[0] and (macro_name_col[1]!="your_instance_name1"):
+					continue
 
 			if "DSP" in macro_name:
 				Y_site = int(macro_site_col[-1])

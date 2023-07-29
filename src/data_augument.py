@@ -37,7 +37,7 @@ def augment_data(args, logger, dataset, augment_pos_list, augment_neg_list, Macr
 def augment_single_data(args, logger):
     logger.info("Augment all designs in dataset %s." % args.dataset)
     dataset = load_dataset(args, logger)
-    dataset.readSamplePl(logger)
+    dataset.readSamplePl(args.solution, logger)
     totalMacroHPWL_gt = dataset.calMacroHPWL()
     logger.info("Macro HPWL for vivado case:"+str(totalMacroHPWL_gt))
     aug_file_num = list(range(0, args.augment_pos_num + args.augment_neg_num))
@@ -85,7 +85,7 @@ def augment_all_data_parallel(args, logger):
         cur_args = copy.deepcopy(args)
         cur_args.design_name = params["design_name"]
         dataset = load_dataset(cur_args, logger)
-        dataset.readSamplePl(logger)
+        dataset.readSamplePl(args.solution, logger)
         totalMacroHPWL_gt = dataset.calMacroHPWL()
         logger.info("Macro HPWL for vivado case:"+str(totalMacroHPWL_gt))
         aug_file_num = list(range(0, args.augment_pos_num + args.augment_neg_num))        

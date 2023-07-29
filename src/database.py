@@ -380,9 +380,9 @@ class Dataset:
                                 self.macronodeswithRegionConstr.append(nodeid)
                             id = id + 1
 
-    def readSamplePl(self, logger):
-        if os.path.join(self.params["sample"]):
-            with open(self.params["sample"], "r") as f_samp:
+    def readSamplePl(self, solution_path, logger):
+        if os.path.join(solution_path):
+            with open(solution_path, "r") as f_samp:
                 logger.info("loading the macro placement result from sample.pl")
                 all_lines = f_samp.read().splitlines()
                 for id in range(len(all_lines)):
