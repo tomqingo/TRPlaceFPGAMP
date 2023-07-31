@@ -579,10 +579,15 @@ class GaussianDiffusion:
         :param x_start_mean: word embedding
         :return: x_0
         '''
+
         reshaped_x_t = x_t
+        # print('reshaped_x_t.shape', reshaped_x_t.shape)
         res_place = get_place(reshaped_x_t)
         gt_place = raw_input.to(th.long)
         loss_fct = th.nn.CrossEntropyLoss(reduction='none')
+        # loss_fct = th.nn.CrossEntropyLoss()
+        # print('11:', loss_fct(res_place.view(-1, res_place.size(-1)), gt_place.view(-1)).shape)
+        # print('22:', gt_place.shape)
         ce_loss = loss_fct(res_place.view(-1, res_place.size(-1)), gt_place.view(-1)).view(gt_place.shape)
         ce_loss = th.squeeze(ce_loss, -1)
         ce_loss *= mask
@@ -624,6 +629,8 @@ class GaussianDiffusion:
         raw_input = model_kwargs.pop('raw_input').to(t.device)
         emb = model_kwargs.pop('emb').to(t.device)
         mask = model_kwargs.pop('mask').to(t.device)
+        emb_mask = model_kwargs.pop('emb_mask').to(t.device)
+        # print('emb_mask.shape:', emb_mask.shape)
 
         x_start_mean = emb
 
@@ -638,14 +645,26 @@ class GaussianDiffusion:
             noise = th.randn_like(x_start)
 
         x_t = self.q_sample(x_start, t, noise=noise, mask=mask) # reparametrization trick.
+        # print('x_t.shape:', x_t.shape)
+
+        ### Newly added
+        x_t = x_t * emb_mask + x_start * (th.ones_like(emb_mask) - emb_mask)
 
         terms = {}
 
         target = x_start
         model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
+
+        ### Newly added
+        model_output = model_output * emb_mask + target * (th.ones_like(emb_mask) - emb_mask)
+
         assert model_output.shape == target.shape == x_start.shape
         terms["mse"] = mean_flat((target - model_output) ** 2)
         model_out_x_start = self._x0_helper(model_output, x_t, t)['pred_xstart'] # predicted_xstart = model_output
+        
+        ### Newly added
+        model_out_x_start = model_out_x_start * emb_mask + x_start_mean * (th.ones_like(emb_mask) - emb_mask)
+
         t0_mask = (t == 0)
         t0_loss = mean_flat((x_start_mean - model_out_x_start) ** 2)
         terms["mse"] = th.where(t0_mask, t0_loss, terms["mse"])
@@ -655,7 +674,13 @@ class GaussianDiffusion:
         tT_loss =  mean_flat(out_mean ** 2)
 
         get_place = model.model.get_place
-        decoder_nll = self._token_discrete_loss_modified(x_start, get_place, raw_input, mask=mask) # embedding regularization
+        # decoder_nll = self._token_discrete_loss_modified(x_start, get_place, raw_input, mask=mask) # embedding regularization
+        
+        ### Newly added
+        place_emb_size = int(th.sum(emb_mask[0][1]).item())
+        # print('place_emb_size:', place_emb_size)
+        decoder_nll = self._token_discrete_loss_modified(x_start[:,:,:place_emb_size], get_place, raw_input, mask=mask) # embedding regularization
+        
         terms["nll"] = decoder_nll
 
         terms["loss"] = terms["mse"] + decoder_nll + tT_loss

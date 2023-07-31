@@ -17,12 +17,6 @@ def load_defaults_config():
 
 
 def create_model_and_diffusion(
-    hidden_t_dim,
-    hidden_dim,
-    vocab_size,
-    config_name,
-    use_plm_init,
-    dropout,
     diffusion_steps,
     noise_schedule,
     learn_sigma,
@@ -33,14 +27,8 @@ def create_model_and_diffusion(
     rescale_learned_sigmas,
     use_kl,
     device,
-    notes,
     **kwargs,
 ):
-
-    ### Old transformer model
-    # model = TransformerNetModel(
-    #     device=device,
-    # )
 
     ### New transformer model -> save memory and handle longer sequence
     model = LinearAttentionTransformerLM(
@@ -66,15 +54,6 @@ def create_model_and_diffusion(
         shift_tokens = True,            # add single token shifting, for great improved convergence
         device = device,
     )
-
-    ### TODO: under implementation
-    # model = ReformerLM(
-    #     num_tokens= 2282,
-    #     dim = 512,
-    #     depth = 12,
-    #     max_seq_len = 2282,
-    #     heads = 8,
-    # )
 
     betas = gd.get_named_beta_schedule(noise_schedule, diffusion_steps)
 

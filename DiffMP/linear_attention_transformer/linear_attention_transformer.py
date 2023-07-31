@@ -499,12 +499,8 @@ class LinearAttentionTransformerLM(nn.Module):
         self.metric_enc = nn.Linear(1, emb_dim, device=device, dtype=dtype)
         self.place_enc = nn.Embedding(2282, emb_dim//2, device=device, dtype=dtype)
         self.region_enc = nn.Linear(4, emb_dim//4, device=device, dtype=dtype)
-        ### TODO: self.graph_enc = GNN
-        self.graph_enc = None
 
-        self.get_place_ = nn.Linear(emb_dim, 2282, device=device, dtype=dtype)
-
-        # self.pos_encoder = PositionalEncoding(d_model=dim)
+        self.get_place_ = nn.Linear(emb_dim//2, 2282, device=device, dtype=dtype)
 
         with torch.no_grad():
             self.get_place_.weight.zero_()
@@ -526,7 +522,6 @@ class LinearAttentionTransformerLM(nn.Module):
 
         x = torch.cat((t_embed, x), dim=1)
 
-        # x = self.token_emb(x)
         x = x + self.pos_emb(x).type(x.type())
 
         layer_pos_emb = self.layer_pos_emb(x)
@@ -535,7 +530,7 @@ class LinearAttentionTransformerLM(nn.Module):
 
         x = x[:, 1:, :]
         return x
-        # return self.out(x)
+
 
 class MLP(nn.Module):
     def __init__(self, *, device: torch.device, dtype: torch.dtype, width: int, init_scale: float):

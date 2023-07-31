@@ -38,35 +38,23 @@ def main():
 
     torch.multiprocessing.set_start_method('spawn')
 
-    print('#'*30, 'size of vocab', args.vocab_size)
     logger.log("### Creating model and diffusion...")
-    # print('#'*30, 'CUDA_VISIBLE_DEVICES', os.environ['CUDA_VISIBLE_DEVICES'])
+
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, load_defaults_config().keys())
     )
-    # print('#'*30, 'cuda', dist_util.dev())
-    # model.to(dist_util.dev()) #  DEBUG **
-    # model.cuda() #  DEBUG **
+
     model.to(args.device)
 
-    data = load_data_text(
+    data, data_valid = load_data_text(
         batch_size=args.batch_size,
+        split='train',
         metric_enc=model.metric_enc,
         place_enc=model.place_enc,
         region_enc=model.region_enc,
-        graph_enc=model.graph_enc,
         device = args.device,
     )
 
-    data_valid = load_data_text(
-        batch_size=args.batch_size,
-        split='valid',
-        metric_enc=model.metric_enc,
-        place_enc=model.place_enc,
-        region_enc=model.region_enc,
-        graph_enc=model.graph_enc,
-        device = args.device,
-    )
 
     pytorch_total_params = sum(p.numel() for p in model.parameters())
 

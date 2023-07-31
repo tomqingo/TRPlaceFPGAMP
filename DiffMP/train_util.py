@@ -107,8 +107,7 @@ class TrainLoop:
             self.ema_params = [
                 copy.deepcopy(self.master_params) for _ in range(len(self.ema_rate))
             ]
-        
-        
+     
 
         if th.cuda.is_available(): # DEBUG **
             self.use_ddp = False
@@ -130,6 +129,7 @@ class TrainLoop:
                 )
             self.use_ddp = False
             self.ddp_model = self.model
+
 
     def _load_and_sync_parameters(self):
         resume_checkpoint = find_resume_checkpoint() or self.resume_checkpoint
@@ -221,7 +221,6 @@ class TrainLoop:
                 last_batch = (i + self.microbatch) >= batch.shape[0]
                 # t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
                 t, weights = self.schedule_sampler.sample(micro.shape[0], self.device)
-                # print(micro_cond.keys())
                 compute_losses = functools.partial(
                     self.diffusion.training_losses,
                     self.ddp_model,
@@ -246,10 +245,12 @@ class TrainLoop:
         for i in range(0, batch.shape[0], self.microbatch):
             micro = batch[i : i + self.microbatch].to(self.device)
             micro_cond = {
+                # k: v[i : i + self.microbatch].to(dist_util.dev())
                 k: v[i : i + self.microbatch].to(self.device)
                 for k, v in cond.items()
             }
             last_batch = (i + self.microbatch) >= batch.shape[0]
+            # t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
             t, weights = self.schedule_sampler.sample(micro.shape[0], self.device)
             compute_losses = functools.partial(
                 self.diffusion.training_losses,

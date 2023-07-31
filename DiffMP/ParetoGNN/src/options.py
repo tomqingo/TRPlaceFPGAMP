@@ -43,7 +43,7 @@ class Options():
         self.parser.add_argument('--minsg_dfr', type=float, default=0.3, help='dfr for minsg')
         self.parser.add_argument('--use_prelu', action='store_true')
         self.parser.add_argument('--pretrain_label_dir', required=True, type=str, default='path to pretrain labels')
-        self.parser.add_argument('--dataset', type=str, required=True, choices=['wiki_cs', 'co_cs', 'co_phy', 'co_photo', 'co_computer', 'actor', 'chameleon', 'squirrel', 'pubmed', 'cora', 'citeseer', 'arxiv', 'products'], help='dataset')
+        self.parser.add_argument('--dataset', type=str, required=True, choices=['Design_2', 'wiki_cs', 'co_cs', 'co_phy', 'co_photo', 'co_computer', 'actor', 'chameleon', 'squirrel', 'pubmed', 'cora', 'citeseer', 'arxiv', 'products'], help='dataset')
         self.parser.add_argument('--grad_norm', type=str, default='l2', choices=['l2', 'loss', 'loss+', 'none'])
         self.parser.add_argument('--split', type=str, default='random', choices=['public', 'random'], help='dataset')
         self.parser.add_argument('--mask_edge', action='store_true', help='mask edge for link prediction')

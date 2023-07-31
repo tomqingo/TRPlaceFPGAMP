@@ -66,97 +66,26 @@ def sparse_to_tuple(sparse_mx):
     shape = sparse_mx.shape
     return coords, values, shape
 
-dataset_classes = {
-    'cora':CoraGraphDataset,
-    'pubmed':PubmedGraphDataset, 
-    'citeseer':CiteseerGraphDataset, 
-    'wiki_cs':WikiCSDataset,
-    'co_cs':CoauthorCSDataset, 
-    'co_computer':AmazonCoBuyComputerDataset, 
-    'co_photo':AmazonCoBuyPhotoDataset,
-    'co_phy':CoauthorPhysicsDataset
-}
-os.mkdir('links')
-os.mkdir('pretrain_labels')
 
-for k, v in dataset_classes.items():
-    g = v()[0]
-    total_pos_edges = torch.randperm(g.num_edges())
-    adj_train = g.adjacency_matrix(scipy_fmt='csr')
-    # adj_train = g.adj_external(scipy_fmt='csr')
-    train_edges, train_edges_false, val_edges, val_edges_false, test_edges, test_edges_false = mask_test_edges(adj_train, 0.1, 0.2)
-    tvt_edges_file = f'links/{k}_tvtEdges.pkl'
-    pickle.dump((train_edges, train_edges_false, val_edges, val_edges_false, test_edges, test_edges_false), open(tvt_edges_file, 'wb'))
-    node_assignment = dgl.metis_partition_assignment(g, 10)
-    torch.save(node_assignment, f'pretrain_labels/metis_label_{k}.pt')
+if not os.path.exists('./MP_links'):
+    os.mkdir('./MP_links')
+if not os.path.exists('./MP_pretrain_labels'):
+    os.mkdir('./MP_pretrain_labels')
 
-for dataset in ['chameleon', 'film', 'squirrel']:
-# for dataset in ['wisconsin']:
-    g, _ = dgl.load_graphs(f'hetero_graphs/{dataset}.bin')
-    g = g[0]
-    total_pos_edges = torch.randperm(g.num_edges())
-    adj_train = g.adjacency_matrix(scipy_fmt='csr')
-    # adj_train = g.adj_external(scipy_fmt='csr')
-    train_edges, train_edges_false, val_edges, val_edges_false, test_edges, test_edges_false = mask_test_edges(adj_train, 0.1, 0.2)
-    tvt_edges_file = f'links/{dataset}_tvtEdges.pkl'
-    pickle.dump((train_edges, train_edges_false, val_edges, val_edges_false, test_edges, test_edges_false), open(tvt_edges_file, 'wb'))
-    node_assignment = dgl.metis_partition_assignment(g, 10)
-    torch.save(node_assignment, f'pretrain_labels/metis_label_{dataset}.pt')
+for root, ds, _ in os.walk('/research/d1/gds/qluo22/dataset_col/mlcad2023_v2'):
+    for d in ds:
+        if 'Design' in d:
+            base_design_name = d
+            print('processing:', base_design_name)
 
-# # arxiv
+            g, _ = dgl.load_graphs(f'MP_hetero_graphs/{base_design_name}.bin')
+            g = g[0]
+            total_pos_edges = torch.randperm(g.num_edges())
+            adj_train = g.adjacency_matrix(scipy_fmt='csr')
+            # adj_train = g.adj_external(scipy_fmt='csr')
+            train_edges, train_edges_false, val_edges, val_edges_false, test_edges, test_edges_false = mask_test_edges(adj_train, 0.1, 0.2)
+            tvt_edges_file = f'MP_links/{base_design_name}_tvtEdges.pkl'
+            pickle.dump((train_edges, train_edges_false, val_edges, val_edges_false, test_edges, test_edges_false), open(tvt_edges_file, 'wb'))
+            node_assignment = dgl.metis_partition_assignment(g, 10)
+            torch.save(node_assignment, f'MP_pretrain_labels/metis_label_{base_design_name}.pt')
 
-# from ogb.nodeproppred import DglNodePropPredDataset
-# dataset = DglNodePropPredDataset(name = 'ogbn-arxiv')
-# g = dataset[0][0]
-# total_edges = torch.stack(g.edges()).t()
-
-# num_val_links = 30000
-# num_test_links = 60000
-# num_train_links = 210000
-
-# assert num_train_links + num_test_links + num_val_links < len(total_edges), 'Not enough edges to sample '
-
-# # *100 here means we can set negative ratio for upto 100 when training for link prediciton downstream task
-# negatives = torch.stack(g.global_uniform_negative_sampling(num_val_links + num_test_links + num_train_links*100)).t()
-# test_edges_false, val_edges_false, train_edges_false = negatives[:num_test_links].numpy(), \
-#     negatives[num_test_links:num_test_links+num_val_links].numpy(), negatives[num_test_links+num_val_links:].numpy()
-
-# indices = torch.randperm(len(total_edges)).numpy()
-# total_edges = total_edges[indices]
-# test_edges, val_edges, train_edges = total_edges[:num_test_links].numpy(), \
-#     total_edges[num_test_links:num_test_links+num_val_links].numpy(), total_edges[num_test_links+num_val_links:num_test_links+num_val_links+num_train_links].numpy()
-
-# dataset = 'arxiv'
-# tvt_edges_file = f'links/{dataset}_tvtEdges.pkl'
-# pickle.dump((train_edges, train_edges_false, val_edges, val_edges_false, test_edges, test_edges_false), open(tvt_edges_file, 'wb'))
-# node_assignment = dgl.metis_partition_assignment(g, 10)
-# torch.save(node_assignment, f'pretrain_labels/metis_label_{dataset}.pt')
-
-# # products
-
-# from ogb.nodeproppred import DglNodePropPredDataset
-# dataset = DglNodePropPredDataset(name = 'ogbn-products')
-# g = dataset[0][0]
-# total_edges = torch.stack(g.edges()).t()
-
-# num_val_links = 30000
-# num_test_links = 60000
-# num_train_links = 210000
-
-# assert num_train_links + num_test_links + num_val_links < len(total_edges), 'Not enough edges to sample '
-
-# # *100 here means we can set negative ratio for upto 100 when training for link prediciton downstream task
-# negatives = torch.stack(g.global_uniform_negative_sampling(num_val_links + num_test_links + num_train_links*100)).t()
-# test_edges_false, val_edges_false, train_edges_false = negatives[:num_test_links].numpy(), \
-#     negatives[num_test_links:num_test_links+num_val_links].numpy(), negatives[num_test_links+num_val_links:].numpy()
-
-# indices = torch.randperm(len(total_edges)).numpy()
-# total_edges = total_edges[indices]
-# test_edges, val_edges, train_edges = total_edges[:num_test_links].numpy(), \
-#     total_edges[num_test_links:num_test_links+num_val_links].numpy(), total_edges[num_test_links+num_val_links:num_test_links+num_val_links+num_train_links].numpy()
-
-# dataset = 'products'
-# tvt_edges_file = f'links/{dataset}_tvtEdges.pkl'
-# pickle.dump((train_edges, train_edges_false, val_edges, val_edges_false, test_edges, test_edges_false), open(tvt_edges_file, 'wb'))
-# node_assignment = dgl.metis_partition_assignment(g, 10)
-# torch.save(node_assignment, f'pretrain_labels/metis_label_{dataset}.pt')

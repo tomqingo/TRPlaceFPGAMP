@@ -7,6 +7,8 @@ sys.path.append('.')
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='training args.')
+    parser.add_argument('--dataset', type=str, default='', help='name of training dataset')
+    parser.add_argument('--data_dir', type=str, default='', help='path to training dataset')
 
     parser.add_argument('--noise_schedule', type=str, default='cosine', choices=['linear', 'cosine', 'sqrt', 'trunc_cos', 'trunc_lin', 'pw_lin'], help='the distribution of noises')
     parser.add_argument('--diff_steps', type=int, default=4000, help='diffusion steps')
@@ -22,6 +24,13 @@ if __name__ == '__main__':
     parser.add_argument('--bsz', type=int, default=64, help='batch size')
     parser.add_argument('--microbatch', type=int, default=64, help='microbatch size')
     parser.add_argument('--seed', type=int, default=101, help='random seed')
+
+    parser.add_argument('--config_name', type=str, default='bert-base-uncased', help='config of pre-trained models')
+    parser.add_argument('--vocab', type=str, default='bert', help='use bert vocab or load external vocab dict if given as path')
+    parser.add_argument('--use_plm_init', type=str, default='no', choices=['no', 'bert'], help='load init parameter from the pre-trained lm')
+
+    parser.add_argument('--notes', type=str, default='-', help='as training notes or specifical args')
+    parser.add_argument('--app', type=str, default='', help='other input args')
     
     parser.add_argument('--device', type=str, default='cuda:0')
 
@@ -39,10 +48,12 @@ if __name__ == '__main__':
         if not os.path.isdir(folder_name):
             os.mkdir(folder_name)
 
-    Model_FILE = f"diffuseq_h{args.hidden_dim}_lr{args.lr}" \
+    Model_FILE = f"diffuseq_{args.dataset}_h{args.hidden_dim}_lr{args.lr}" \
                 f"_t{args.diff_steps}_{args.noise_schedule}_{args.schedule_sampler}" \
                 f"_seed{args.seed}"
-
+    if args.notes:
+        args.notes += time.strftime("%Y%m%d-%H:%M:%S")
+        Model_FILE = Model_FILE + f'_{args.notes}'
     Model_FILE = os.path.join(folder_name, Model_FILE)
 
     if int(os.environ['LOCAL_RANK']) == 0:
@@ -50,6 +61,7 @@ if __name__ == '__main__':
             os.mkdir(Model_FILE)
 
     COMMANDLINE = f" OPENAI_LOGDIR={Model_FILE}  " \
+                  f"TOKENIZERS_PARALLELISM=false " \
                   f"python train.py   " \
                   f"--checkpoint_path {Model_FILE} " \
                   f"--lr {args.lr} " \
@@ -60,8 +72,9 @@ if __name__ == '__main__':
                   f"--seq_len {args.seq_len} --hidden_t_dim {args.hidden_t_dim} --seed {args.seed} " \
                   f"--hidden_dim {args.hidden_dim} " \
                   f"--learning_steps {args.learning_steps} --save_interval {args.save_interval} " \
-                  f"--device {args.device}"
+                  f"--config_name {args.config_name} --device {args.device}"
 
+    COMMANDLINE += " " + args.app
 
     if int(os.environ['LOCAL_RANK']) == 0:
         with open(os.path.join(Model_FILE, 'saved_bash.sh'), 'w') as f:
