@@ -44,9 +44,11 @@ options:
 
 # Directory in the repo
 
-cpp_to_py: the codes for C++ and python conversion
+result: the macro placement results, placement error and the log file
 
-result: the macro placement results and the log file
+preprocessing: some preprocessing tcl and python file (like extract the macro and convert the macro placement solution)
+
+DiffMP: diffusion model for macro placement
 
 src: source code
 - db  Some data structures used to represent the nodes, nets, macros, and sitemaps.
@@ -62,7 +64,7 @@ $ python3 main.py --dataset_root <benchmark_root> --dataset <dataset_name> --des
 ~~~
 If we want to run the Design_12 in mlcad2023_v2 using the macro placement solution in /data/ssd/qluo/docker_practice/Cumple/DiffMP/result/Design_12_solution.pl
 ~~~
-$ python3 main.py --dataset_root /data/ssd/qluo/benchmark/mlcad2023_v2 --dataset mlcad2023 --solution /data/ssd/qluo/docker_practice/Cumple/DiffMP/result/Design_12_solution.pl --run_all False --random_place False
+$ python3 main.py --dataset_root /data/ssd/qluo/benchmark/mlcad2023_v2 --dataset mlcad2023 --design_name Design_12 --solution /data/ssd/qluo/docker_practice/Cumple/DiffMP/result/Design_12_solution.pl --run_all False --random_place False
 ~~~
 If we want to run all the cases in mlcad2023_v2 using randomly placement
 ~~~
