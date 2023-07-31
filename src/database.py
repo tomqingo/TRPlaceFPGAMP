@@ -882,27 +882,29 @@ class Dataset:
             f_sol.write(output_str)
             #print(output_path)
     
-    def CheckLegalCoordinate(self, logger):
+    def CheckLegalCoordinate(self, error_str, logger):
+        is_legal = True
         for id in range(len(self.nodes)):
             if not self.nodes[id].is_macro:
                 continue
-            if self.nodes[id].locX < 0 or self.nodes[id].locX > self.sitemap_width:
-                logger.info("Invalid x location for node "+self.nodes[id].name+" "+str(self.nodes[id].locX))
-                return False
-            if self.nodes[id].locY < 0 or self.nodes[id].locY > self.sitemap_height:
-                logger.info("Invalid y location for node "+self.nodes[id].name+" "+str(self.nodes[id].locY))
-                return False
+            if (self.nodes[id].locX < 0 or self.nodes[id].locX > self.sitemap_width) or (self.nodes[id].locY < 0 or self.nodes[id].locY > self.sitemap_height):
+                #logger.info("Invalid x location for node "+self.nodes[id].name+" "+str(self.nodes[id].locX))
+                error_str += ("Invalid site ("+ str(self.nodes[id].locX) + ","+str(self.nodes[id].locY)+") for node "+self.nodes[id].name+"\n")
+                is_legal = False
             if not self.nodes[id].IsinRegionConstr():
-                logger.info("The location for node "+self.nodes[id].name+" not in the region constraints")                
-                return False
+                error_str += ("The location ("+str(self.nodes[id].locX) + ","+str(self.nodes[id].locY)+") for node "+self.nodes[id].name+" not in the region constraints\n")
+                #logger.info("The location for node "+self.nodes[id].name+" not in the region constraints")                
+                is_legal = False
             siteid = self.nodes[id].site
             resourcetype = self.nodes[id].resourcetype
             if self.sites[siteid].resource_supply[resourcetype]<=0:
-                logger.info("Invalid capatible site for node:"+self.nodes[id].name+" site:("+str(self.sites[siteid].locX)+","+str(self.sites[siteid].locY)+")")
-                return False
-        return True
+                #logger.info("Invalid capatible site for node:"+self.nodes[id].name+" site:("+str(self.sites[siteid].locX)+","+str(self.sites[siteid].locY)+")")
+                error_str += ("Invalid site for node:"+self.nodes[id].name+" site:("+str(self.sites[siteid].locX)+","+str(self.sites[siteid].locY)+")\n")
+                is_legal = False
+        return is_legal, error_str
 
-    def CheckResource(self, logger):
+    def CheckResource(self, error_str, logger):
+        is_legal = True
         for i in range(len(self.sites)):
             for j in range(len(list(self.sites[i].resource_supply.keys()))):
                 res_name = list(self.sites[i].resource_supply.keys())[j]
@@ -910,11 +912,13 @@ class Dataset:
                     for id in range(len(self.sites[i].nodecol)):
                         nodeid = self.sites[i].nodecol[id]
                         #print(self.nodes[nodeid].name)
-                    logger.info("Excessive resource demand in Site:("+str(self.sites[i].locX)+","+str(self.sites[i].locY)+")"+" Demand:"+str(self.sites[i].resource_usage[res_name])+" Supply:"+str(self.sites[i].resource_supply[res_name]))
-                    return False
-        return True
+                    #logger.info("Excessive resource demand in Site:("+str(self.sites[i].locX)+","+str(self.sites[i].locY)+")"+" Demand:"+str(self.sites[i].resource_usage[res_name])+" Supply:"+str(self.sites[i].resource_supply[res_name]))
+                    error_str += ("Excessive resource demand in Site:("+str(self.sites[i].locX)+","+str(self.sites[i].locY)+")"+" Demand:"+str(self.sites[i].resource_usage[res_name])+" Supply:"+str(self.sites[i].resource_supply[res_name])+"\n")
+                    is_legal = False
+        return is_legal, error_str
     
-    def CheckMacroShape(self, logger):
+    def CheckMacroShape(self, error_str, logger):
+        is_legal = True
         for i in range(len(self.cascademacros)):
             macro_node_col = self.cascademacros[i].Macronodecol
             macro_node_id_col = []
@@ -936,22 +940,40 @@ class Dataset:
                 cal_site_locX = self.nodes[nodeid].locX
                 cal_site_locY = self.nodes[nodeid].locY
                 if not (gt_site_locX==cal_site_locX and gt_site_locY==cal_site_locY):
-                    logger.info("Invalid Placement Result for Macro:"+ self.cascademacros[i].name)
-                    return False
-        return True
+                    #logger.info("Invalid Placement Result for Macro:"+ self.cascademacros[i].name)
+                    error_str += ("The placed sites for cells in Macro:"+ self.cascademacros[i].name+"are not neighboring\n")
+                    is_legal = False
+                    break
+        return is_legal, error_str
     
-    def CheckLegality(self, logger):
-        if not self.CheckLegalCoordinate(logger):
+    def CheckLegality(self, placelegal_path, logger):
+        is_legal = True
+        f_legal = open(placelegal_path, "w")
+        error_str = ""
+        
+        is_legal_sub, error_str = self.CheckLegalCoordinate(error_str, logger)
+        if not is_legal_sub:
             logger.info("Cell Coordinate Legality Check does not pass")
-            return False
-        if not self.CheckResource(logger):
+            is_legal = False
+
+        is_legal_sub, error_str = self.CheckResource(error_str, logger)        
+        if not is_legal_sub:
             logger.info("Site Resource Check does not pass")
-            return False
-        if not self.CheckMacroShape(logger):
+            is_legal = False
+        
+        is_legal_sub, error_str = self.CheckMacroShape(error_str, logger) 
+        if not is_legal_sub:
             logger.info("Macro Placement Shape Check does not pass")
-            return False
-        logger.info("Check pass!!")
-        return True
+            is_legal = False
+        
+        if is_legal:
+            logger.info("Legality Check pass!!")
+        else:
+            logger.info("Legality Check not pass!!")
+            f_legal.write(error_str)
+        
+        f_legal.close()
+        return is_legal
       
     def readAll(self, logger):
         logger.info("loading cell library")

@@ -28,14 +28,15 @@ def run_placement_main(args, logger):
         #if os.path.exists(dataset.params["sample"]):
         dataset.readSamplePl(args.solution, logger)
     # Check the legality of the Placement Result
-    is_legal = dataset.CheckLegality(logger)
+    placelegal_path = os.path.join(args.result_dir, args.exp_id, args.log_dir, args.design_name, "PlaceError.log")
+    if not os.path.exists(os.path.dirname(placelegal_path)):
+        os.makedirs(os.path.dirname(placelegal_path))
+    is_legal = dataset.CheckLegality(placelegal_path, logger)
     totalMacroHPWL = dataset.calMacroHPWL()
     logger.info("Macro HPWL: {}".format(totalMacroHPWL))
     # Output the placement result
     #output_path = os.path.join(args.dataset_root, args.design_name, "macroplacement.pl")
     output_path = os.path.join(args.result_dir, args.exp_id, args.log_dir, args.design_name, "solution.pl")
-    if not os.path.exists(os.path.dirname(output_path)):
-        os.makedirs(os.path.dirname(output_path))
     dataset.OutputSolutionpl(output_path)
     # draw the placement result by inherent visulization tool
     # draw_macro_placement_result(args, dataset, logger)
