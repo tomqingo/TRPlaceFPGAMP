@@ -131,7 +131,7 @@ if __name__ == '__main__':
                                                     constraint_idx = f_region[i].strip().split(' ')[2]
                                                     # constraint_rect = ','.join(f_region[i+1].strip().split(' ')[1:])
 
-                                                    constraint_rect = np.array([int(i) for i in f_region[i+1].strip().split(' ')[1:]]) / np.array([0,0,206,300])
+                                                    constraint_rect = np.array([int(i) for i in f_region[i+1].strip().split(' ')[1:]]) / np.array([206,300,206,300])
                                                     constraint_rect = np.clip(constraint_rect, 0., 1.).tolist()
                                                     constraint_rect = ','.join([str(i) for i in constraint_rect])
 
@@ -184,6 +184,10 @@ if __name__ == '__main__':
                                                         if 'DSP' in macro_name:
                                                             DSP.append(macro_name)
                                                             place_DSP.append(dict_DSP[site_x+','+site_y])
+                                                            # Special operation for DSP_config cells
+                                                            if "DSP_config" in macro_name:
+                                                                macro_name_col = macro_name.split("/")
+                                                                macro_name = macro_name_col[0] + "/" + macro_name_col[1]
                                                             if macro_name in constraint_dict_DSP.keys():
                                                                 con_DSP.append(constraint_dict_DSP[macro_name])
                                                             else:
