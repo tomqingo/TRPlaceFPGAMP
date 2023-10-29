@@ -16,19 +16,25 @@ class Pin:
 
     def SetCtrl(self):
         self.ctrl_label = True #True: ctrl Line, False: data Line
+    
+    def IsClock(self):
+        return self.clock_label
+    
+    def IsCtrl(self):
+        return self.ctrl_label
 
 class Cell:
     def __init__(self, name, id):
         self.name = name
         self.id = id
-        self.pinNameIdMap = {}
+        self.pinName2Id = {}
         self.pins = []
         self.pin_num = 0
         self.resourcename = None
     
     def addPin(self, pin_name, pin_IO, pin_clock=False, pin_ctrl=False):
         pin_id = len(self.pins)
-        if not pin_name in list(self.pinNameIdMap.keys()):
+        if not pin_name in list(self.pinName2Id.keys()):
             newpin = Pin(pin_name, pin_IO, self.name)
             newpin.SetIO(pin_IO)
             if pin_clock:
@@ -36,5 +42,5 @@ class Cell:
             if pin_ctrl:
                 newpin.SetCtrl()
             self.pins.append(newpin)
-            self.pinNameIdMap[pin_name] = pin_id
+            self.pinName2Id[pin_name] = pin_id
             self.pin_num = self.pin_num + 1

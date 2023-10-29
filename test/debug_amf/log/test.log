@@ -1,0 +1,87 @@
+[   0.611] Command line: python main.py --result_dir test --run_all True --dataset_root /data/ssd/qluo/test_design/mlcad23
+[   0.611] log file at test/debug_amf/log/test.log
+[   0.611] 
+[   0.611] dataset_root: /data/ssd/qluo/test_design/mlcad23
+[   0.611] dataset: mlcad2023
+[   0.611] design_name: Design_2
+[   0.611] custom_path: 
+[   0.611] run_all: True
+[   0.611] solution: /data/ssd/qluo/docker_practice/Cumple/result/debug_amf/macroplacement.pl
+[   0.611] runs: 8
+[   0.611] log_freq: 100
+[   0.611] result_dir: test
+[   0.611] exp_id: debug_amf
+[   0.611] log_dir: log
+[   0.611] log_name: test.log
+[   0.611] eval_dir: eval
+[   0.611] random_place: False
+[   0.611] augument: False
+[   0.611] augment_pos_num: 20
+[   0.612] augment_neg_num: 37
+[   0.612] augment_small_range: 50
+[   0.612] augment_large_range: 100
+[   0.612] augment_small_per: 0.5
+[   0.612] augment_large_per: 0.7
+[   0.612] 
+[   0.612] =================
+[   0.612]    CUMPLE Tool   
+[   0.612] =================
+[   0.612] Run all designs in dataset mlcad2023.
+[   0.620] =================
+[   0.620] Start place mlcad2023/Design_1
+[   0.621] loading from original benchmark...
+[   0.621] loading cell library
+[   0.632] Number of cells in the library:13
+[   0.632] loading netlist
+[  12.244] Number of nodes:570483
+[  28.105] Number of nets:617430
+[  28.105] loading sitemap
+[  30.492] Size of the site map:(206,300)
+[  30.492] Available Site:53100
+[  30.492] loading fixed position
+[  30.499] loading cascaded macro info
+[  30.504] loading region constraints
+[  31.947] Number of clock nets:24
+[  31.948] Number of high-fanout nets:27
+[  31.948] Number of fix nodes:476
+[  31.948] Number of macros:2400
+[  31.948] Number of basic macros:2400,cascade macros:0
+[  31.948] Number of cascade macro nodes:0
+[  31.948] Region Constraints:4
+[  31.948] Min Region Constraint Area:16940
+[  31.948] Max Region Constraint Area:36460
+[  31.948] Avg Region Constraint Area:26692.0
+[  31.948] Region Constraint Node:51838
+[  31.948] Region Constraint Macro Node:392
+[  31.948] Region Constraint Cascade Node:0
+[  31.948] Resource for the nodes in the circuit:LUT:256152 FF:311429 CARRY8:0 DSP48E2:1824 RAMB36E2:576 URAM288:0 IO:502 
+[  31.948] Supply Resource in the FPGA:LUT:788160 FF:788160 CARRY8:49260 DSP48E2:2280 RAMB36E2:720 URAM288:1280 IO:33280 
+[  32.789] =================
+[  32.789] Start place mlcad2023/Design_2
+[  32.789] loading from original benchmark...
+[  32.789] loading cell library
+[  32.800] Number of cells in the library:13
+[  32.800] loading netlist
+[  42.999] Number of nodes:575241
+[  59.845] Number of nets:625164
+[  59.845] loading sitemap
+[  60.885] Size of the site map:(206,300)
+[  60.886] Available Site:53100
+[  60.886] loading fixed position
+[  60.892] loading cascaded macro info
+[  63.004] loading region constraints
+[  63.942] Number of clock nets:24
+[  63.942] Number of high-fanout nets:36
+[  63.942] Number of fix nodes:476
+[  63.943] Number of macros:2320
+[  63.943] Number of basic macros:2304,cascade macros:16
+[  63.943] Number of cascade macro nodes:96
+[  63.943] Region Constraints:2
+[  63.943] Min Region Constraint Area:21364
+[  63.943] Max Region Constraint Area:32004
+[  63.943] Avg Region Constraint Area:26684.0
+[  63.943] Region Constraint Node:51853
+[  63.943] Region Constraint Macro Node:376
+[  63.943] Region Constraint Cascade Node:0
+[  63.943] Resource for the nodes in the circuit:LUT:256200 FF:316139 CARRY8:0 DSP48E2:1824 RAMB36E2:576 URAM288:0 IO:502 
+[  63.943] Supply Resource in the FPGA:LUT:788160 FF:788160 CARRY8:49260 DSP48E2:2280 RAMB36E2:720 URAM288:1280 IO:33280 

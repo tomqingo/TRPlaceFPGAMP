@@ -12,7 +12,7 @@ def draw_macro_placement_result(args, dataset_obj, logger):
     # build resource to site type dictionary
     resourceToSiteType = {} # e.g., DSP48E2 => DSP; LUT3, FDRE, CARRY8 => SLICE
     for siteType in dataset_obj.sitetypes:
-        for resource in siteType.resourcecap.keys():
+        for resource in siteType.resource.keys():
             resourceToSiteType[resource] = siteType.name
     node_span = {'DSP': 2, 'BRAM': 5, 'URAM': 15} # hard-coded, span in y-direction x,y, x,y+?
 
@@ -43,10 +43,10 @@ def draw_macro_placement_result(args, dataset_obj, logger):
     for netid in range(len(dataset_obj.nets)):
         #print(netid)
         net = dataset_obj.nets[netid]
-        for pinid_i in range(len(net.macronodes_adj)):
-            for pinid_j in range(pinid_i+1, len(net.macronodes_adj)):
-                nodeid_i = net.macronodes_adj[pinid_i]
-                nodeid_j = net.macronodes_adj[pinid_j]
+        for pinid_i in range(len(net.macropins)):
+            for pinid_j in range(pinid_i+1, len(net.macropins)):
+                nodeid_i = net.macropins[pinid_i]
+                nodeid_j = net.macropins[pinid_j]
                 if dataset_obj.nodes[nodeid_i].is_macro and dataset_obj.nodes[nodeid_j].is_macro:
                     X_i = dataset_obj.nodes[nodeid_i].locX
                     X_j = dataset_obj.nodes[nodeid_j].locX

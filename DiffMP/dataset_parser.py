@@ -7,10 +7,8 @@ if not os.path.exists("./dataset/site2idx.json"):
     print('Creating site-to-index mapping...')
     dict_DSP = {}
     dict_BRAM = {}
-    dict_URAM = {}
     count_DSP = 1
     count_BRAM = 1
-    count_URAM = 1
     with open("./dataset/design.scl", 'r') as site_map:
         site_map = site_map.readlines()
         for i in range(54, len(site_map)):
@@ -24,13 +22,8 @@ if not os.path.exists("./dataset/site2idx.json"):
                 site_y = site_map[i].strip().split(' ')[1]
                 dict_BRAM[site_x+','+site_y] = str(count_BRAM)
                 count_BRAM += 1
-            elif 'URAM' in site_map[i]:
-                site_x = site_map[i].strip().split(' ')[0]
-                site_y = site_map[i].strip().split(' ')[1]
-                dict_URAM[site_x+','+site_y] = str(count_URAM)
-                count_URAM += 1
     with open('./dataset/site2idx.json', mode='w', encoding='utf-8') as f:
-        json.dump([dict_DSP, dict_BRAM, dict_URAM], f)
+        json.dump([dict_DSP, dict_BRAM], f)
 
 else:
     print('Loading site-to-index mapping...')
@@ -38,10 +31,8 @@ else:
         dicts = json.load(f)
         dict_DSP = dicts[0]
         dict_BRAM = dicts[1]
-        dict_URAM = dicts[2]
         print('len(dict_DSP):', len(dict_DSP))
         print('len(dict_BRAM):', len(dict_BRAM))
-        print('len(dict_URAM):', len(dict_URAM))
 
 
 if __name__ == '__main__':

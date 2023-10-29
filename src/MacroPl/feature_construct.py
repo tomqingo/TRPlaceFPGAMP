@@ -12,13 +12,11 @@ class FeatureExtractor:
         for id in range(len(self.placementinfo.placementunits)):
             placementunit = self.placementinfo.placementunits[id]
             node_feature = []
-            # BRAM/DSP/URAM
+            # BRAM/DSP
             if placementunit.isBRAM():
-                node_feature.extend([1,0,0])
+                node_feature.extend([1,0])
             elif placementunit.isDSP():
-                node_feature.extend([0,1,0])
-            elif placementunit.isURAM():
-                node_feature.extend([0,0,1])
+                node_feature.extend([0,1])
             
             #Cascade/Single
             if placementunit.is_cascade:
@@ -28,14 +26,23 @@ class FeatureExtractor:
             
             #Number of the cells in on placementunit
             node_feature.append(placementunit.num_cells)
-
-            #Number of nets connecting between this macro and other cells (macros and LUT/FF)
-            connmacronum = len(placementunit.placementnetidcol)
-            externalconn = placementunit.externalnetnum
-            connNonmacronum = placementunit.connNonmacronum
-            internalconn = placementunit.internalnetnum
-            node_feature.extend([externalconn, internalconn, connmacronum, connNonmacronum])
             
+            # degree
+            degree = placementunit.degree
+            # Other placement units
+            connExternalMacronum = placementunit.connExternalMacronum
+            # IO ports
+            connIOnum = placementunit.connIOnum
+            # LUTs/FFs
+            connLUTFFnum = placementunit.connLUTFFnum
+            # BRAMs
+            connBRAMMacronum = placementunit.connBRAMnum
+            # DSPs
+            connDSPMacronum = placementunit.connDSPnum
+            # internal nets for cascaded macros
+            internalnetnum = placementunit.internalnetnum
+
+            node_feature.extend([degree, connExternalMacronum, connIOnum, connLUTFFnum, connBRAMMacronum, connDSPMacronum, internalnetnum])            
             node_feature_col.append(node_feature)
         self.node_feature_map = np.array(node_feature_col)
     
@@ -48,6 +55,7 @@ class FeatureExtractor:
                     continue
                 netidcol_i = self.placementinfo.placementunits[placementunit_i].placementnetidcol
                 netidcol_j = self.placementinfo.placementunits[placementunit_j].placementnetidcol
+                # Find the intersection of the connected net sets of these two nodes
                 intersect_set = set(netidcol_i).intersection(set(netidcol_j))
                 if len(intersect_set) > 0:
                     self.adj_matrix[placementunit_i][placementunit_j] = 1
@@ -97,6 +105,13 @@ class FeatureExtractor:
                 output_str += "\n"
             
             f_unit.write(output_str)
+
+    def OutputPUGraph(self, output_path_dir):
+        if not os.path.exists(output_path_dir):
+            os.makedirs(output_path_dir)
+        self.OutputNodeFeature(os.path.join(output_path_dir, "PU_feature.txt"))
+        self.OutputNodelink(os.path.join(output_path_dir, "PU_link.txt"))
+        self.OutputPlacementUnitNode(os.path.join(output_path_dir, "PU_info.txt"))        
 
 
 

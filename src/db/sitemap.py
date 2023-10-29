@@ -2,7 +2,7 @@ import numpy as np
 
 class Resource:
     def __init__(self, name, id):
-        self.resource_table = {"LUT":0, "FF":1, "CARRY8":2, "DSP48E2":3, "RAMB36E2":4, "URAM288":5, "IO":6}
+        self.resource_table = {"LUT":0, "FF":1, "CARRY8":2, "DSP48E2":3, "RAMB36E2":4, "IO":5}
         self.name = name
         self.id = id
         self.celltypecol = []
@@ -17,11 +17,11 @@ class Resource:
 
 class SiteType:
     def __init__(self, name, id):
-        self.site_table = {"SLICE":0, "DSP":1, "BRAM":2, "URAM": 3, "IO":4}
+        self.site_table = {"SLICE":0, "DSP":1, "BRAM":2, "IO":3}
         self.name = name
         self.id = id
         #self.resource_col = []
-        self.resourcecap = {}
+        self.resource = {}
     def GetSiteTypeName(self, sitetype_id):
         sitetype_name_col = [k for k,v in self.site_table.items() if v==sitetype_id]
         sitetype_name = sitetype_name_col[0]
@@ -33,16 +33,31 @@ class SiteType:
     def AddResourceMulti(self, resource, cnt):
         #for i in range(cnt):
         #    self.AddResource(resource)
-        self.resourcecap[resource] = cnt
+        self.resource[resource] = cnt
 
 class Site:
     def __init__(self, sitetype, id, locX, locY):
         self.sitetype = sitetype
         self.id = id
+        # site (locX, locY)
         self.locX = locX
         self.locY = locY
-        self.resource_usage = {"LUT":0, "FF":0, "CARRY8":0, "DSP48E2":0, "RAMB36E2":0, "URAM288":0, "IO":0}
-        self.resource_supply = {"LUT":0, "FF":0, "CARRY8":0, "DSP48E2":0, "RAMB36E2":0, "URAM288":0, "IO":0}
+        # (width, height)
+        self.width = 1
+        if sitetype == "BRAM":
+            self.height = 5
+        elif sitetype == "DSP":
+            self.height = 2.5
+        elif sitetype == "IO":
+            self.height = 26/30
+        else:
+            self.height = 1
+        # real location (realX, realY)
+        self.realX = self.locX
+        self.realY = self.locY + self.height*1.0/2
+        
+        self.resource_usage = {"LUT":0, "FF":0, "CARRY8":0, "DSP48E2":0, "RAMB36E2":0, "IO":0}
+        self.resource_supply = {"LUT":0, "FF":0, "CARRY8":0, "DSP48E2":0, "RAMB36E2":0, "IO":0}
         self.nodecol = []
     
     def addSupplyResource(self, supply):
@@ -59,6 +74,9 @@ class Site:
     
     def CheckIsFull(self, res_name):
         return self.resource_supply[res_name] <= self.resource_usage[res_name]
+    
+    def getLocation(self):
+        return self.locX, self.locY, self.realX, self.realY
 
 
 

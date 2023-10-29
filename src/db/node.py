@@ -1,13 +1,14 @@
 import numpy as np
 
 class Node:
-    def __init__(self, name, id, celltype):        
+    def __init__(self, name, id, celltype):  
+        # basic information      
         self.name = name
         self.id = id
         self.celltype = celltype
         self.resourcetype = None
         # The pins
-        self.pinNameIdMap = {}
+        self.pinName2Id = {}
         self.pins = []
         self.pin_num = 0
         # macro and cascade
@@ -24,21 +25,36 @@ class Node:
         self.netIds = []
         self.outnetIds = []
         self.innetIds = []
-        # position
+        # whether the node is placed
         self.isPlace = False
-        self.locX = 0
-        self.locY = 0
-        self.site = 0
+        # site (locX, locY)
+        self.locX = -1
+        self.locY = -1
+        self.site = -1
+        # real (realX, real Y)
+        self.realX = -1
+        self.realY = -1
     
     def IsMacro(self):
-        # Whther 'BRAM', 'URAM' and 'DSP' is in the node name
-        if 'RAMB' in self.celltype or ('URAM' in self.celltype or 'DSP' in self.celltype):
+        # Whther 'BRAM' and 'DSP' is in the node name
+        if 'RAMB' in self.celltype or 'DSP' in self.celltype:
+            return True
+        else:
+            return False
+        
+    def IsLUT(self):
+        if 'LUT' in self.celltype:
+            return True
+        else:
+            return False
+    
+    def IsFF(self):
+        if 'FF' in self.celltype:
             return True
         else:
             return False
     
     def IsBRAM(self):
-        # Whther 'BRAM', 'URAM' and 'DSP' is in the node name
         if 'RAMB' in self.celltype:
             return True
         else:
@@ -50,11 +66,14 @@ class Node:
         else:
             return False
 
-    def IsURAM(self):
-        if 'URAM' in self.celltype:
+    def IsIO(self):
+        if 'IBUF' in self.celltype or ('OBUF' in self.celltype or 'BUFGCE' in self.celltype):
             return True
         else:
-            return False        
+            return False
+    
+    def hasRegionConstr(self):
+        return (self.regionconstr_type != -1)         
     
     def IsinRegionConstr(self, left_right_region_slack=0, up_down_region_slack=0):
         if self.regionconstr_type == -1:
@@ -69,24 +88,23 @@ class Node:
                     return True
             return False
 
-    def SetPlaceLocation(self, locX, locY, site):
-        if not self.isPlace:
-            self.locX = locX
-            self.locY = locY
-            self.site = site
-            self.isPlace = True
+    # Set the location for the cells
+    def SetPlaceLocation(self, locX, locY, realX, realY, site):
+        self.ResetPlaceLocation()
+        self.locX = locX
+        self.locY = locY
+        self.realX = realX
+        self.realY = realY
+        self.site = site
+        self.isPlace = True
 
-    def ReSetPlaceLocation(self, locX, locY, site):
-        if self.isPlace:
-            self.locX = locX
-            self.locY = locY
-            self.site = site
-            self.isPlace = True
-    
-    def ReturnToDefaultPlaceLocation(self):
-        self.locX = 0
-        self.locY = 0
-        self.site = 0
+    # ReSet the location for the cells   
+    def ResetPlaceLocation(self):
+        self.locX = -1
+        self.locY = -1
+        self.realX = -1
+        self.realY = -1
+        self.site = -1
         self.isPlace = False
     
     def SetResourceType(self, resourcetype):
@@ -94,8 +112,8 @@ class Node:
     
     def addPin(self, pins):
         for id in range(len(pins)):
-            if not pins[id].name in list(self.pinNameIdMap.keys()):
-                self.pinNameIdMap[pins[id].name] = len(self.pins)
+            if not pins[id].name in list(self.pinName2Id.keys()):
+                self.pinName2Id[pins[id].name] = len(self.pins)
                 self.pins.append(pins[id])
         self.pin_num = len(self.pins)
 
@@ -106,6 +124,12 @@ class Node:
         self.outnetIds.append(outnetid)
     
     def addNeighboringInNets(self, innetid):
-        self.innetIds.append(innetid)     
+        self.innetIds.append(innetid) 
+
+    def getLocation(self):
+        return self.locX, self.locY, self.realX, self.realY
+
+    def getlocatedsiteid(self):
+        return self.site  
 
 
