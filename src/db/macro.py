@@ -35,9 +35,10 @@ class CascadeMacro:
         self.width = self.num_col
         self.Macronodecol = []
         self.Nonmacronodecol = []
+        # The conversion from the macro nodes to the 
         self.reference_node = -1
 
-        # Location
+        # Location of the reference node
         self.locX = -1
         self.locY = -1
         self.realX = -1

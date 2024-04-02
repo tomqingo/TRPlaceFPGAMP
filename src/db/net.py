@@ -10,7 +10,10 @@ class Net:
         self.ishighdegree = False
         self.pins = []
         self.macropins = []
+        self.cascademacropins = []
+        self.IOpins = []
         self.is_in_cascade = False
+        self.weight = 1
         if "clk_" in self.name:
             self.isclknet = True
         
@@ -20,6 +23,9 @@ class Net:
 
     def addMacroPin(self, nodeid):
         self.macropins.append(nodeid)
+
+    def addIOPin(self, nodeid):
+        self.IOpins.append(nodeid)
     
     def getclkPinNum(self):
         return self.clkpin_num
@@ -30,3 +36,7 @@ class Net:
     def setHighDegreeNet(self):
         if len(self.pins) > 100:
             self.ishighdegree = True
+    
+    def setWeight(self, _weight):
+        self.weight = _weight
+        

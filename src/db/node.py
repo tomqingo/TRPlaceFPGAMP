@@ -21,6 +21,9 @@ class Node:
         # Region constrain
         self.regionconstr_type = -1
         self.regionconstr = [] #corr [(xLo,yLo,xHi,yHi)_{1},...(xLo,yLo,xHi,yHi)_{N}]
+        self.regionconstrarea = 0
+        self.dspregionarea = 0
+        self.bramregionarea = 0
         # net information
         self.netIds = []
         self.outnetIds = []
@@ -31,7 +34,7 @@ class Node:
         self.locX = -1
         self.locY = -1
         self.site = -1
-        # real (realX, real Y)
+        # real (realX, realY)
         self.realX = -1
         self.realY = -1
     
@@ -72,6 +75,12 @@ class Node:
         else:
             return False
     
+    def IsInCascadeMacro(self):
+        if 'CASCADE' in self.name:
+            return True
+        else:
+            return False
+
     def hasRegionConstr(self):
         return (self.regionconstr_type != -1)         
     

@@ -72,16 +72,6 @@ def writehpwl(args, logger, base_dir_path, hpwl_col, hpwl_gt):
     f_hpwl.write(hpwl_str)
     f_hpwl.close()
 
-def splitfilecol2job(aug_file_num, njobs):
-    aug_file_num_slice = []
-    num_file_per_slice = math.ceil(len(aug_file_num)*1.0/njobs)
-    for id in range(njobs):
-        if id == njobs-1:
-            aug_file_num_slice.append(aug_file_num[id*num_file_per_slice:])
-        else:
-            aug_file_num_slice.append(aug_file_num[id*num_file_per_slice:(id+1)*num_file_per_slice])
-    return aug_file_num_slice
-
 def augment_all_data_parallel(args, logger):
     logger.info("Augment all designs in dataset %s." % args.dataset)
     mul_params = get_multiple_design_params(args.dataset_root, args.dataset)
@@ -90,7 +80,9 @@ def augment_all_data_parallel(args, logger):
         cur_args = copy.deepcopy(args)
         cur_args.design_name = params["design_name"]
         dataset = load_dataset(cur_args, logger)
-        dataset.readSamplePl(args.solution, logger)
+        ## add solution path
+        solution_path = os.path.join(args.solution_dir, params["design_name"], "solution", "solution_gt.pl")
+        dataset.readSamplePl(solution_path, logger)
         totalMacroHPWL_gt = dataset.calMacroHPWL()
         logger.info("Macro HPWL for vivado case:"+str(totalMacroHPWL_gt))
         aug_file_num = list(range(0, args.augment_pos_num + args.augment_neg_num))        

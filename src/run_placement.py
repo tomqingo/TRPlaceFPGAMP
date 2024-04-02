@@ -3,8 +3,10 @@ from src import *
 from src.MacroPl import *
 import pandas as pd
 import copy
+import time
 import os
 from .check_legality import CheckLegality
+import multiprocessing
 
 
 def run_placement_main(args, logger):
@@ -93,3 +95,75 @@ def run_placement_all(args, logger):
     print(design_resource_col)
     print(FPGA_resource_col)
     print(place_col)
+
+def load_placement_calMacroHPWL(args, logger, dataset, solution_col_dir, solution_slice, MacroHPWL_q):
+    MacroHPWL_list = []
+    for solution_name in solution_slice:
+        solution_dir = os.path.join(solution_col_dir, solution_name)
+        solution_path = os.path.join(solution_col_dir, solution_name, "macroplacement.pl")
+        if os.path.exists(solution_path):
+            logger.info("calculate the MacroWirelength for case: "+solution_path)
+            dataset_aug = copy.deepcopy(dataset)
+            dataset_aug.readSamplePl(solution_path, logger)
+            error_path = os.path.join(solution_dir, "PlaceError.log")
+            if CheckLegality(dataset_aug, error_path, logger):
+                totalMacroHPWL = dataset_aug.calMacroHPWL()
+                logger.info("Macro HPWL "+str(totalMacroHPWL))
+                MacroHPWL_list.append([solution_dir, totalMacroHPWL])
+    MacroHPWL_q.put(MacroHPWL_list)
+
+
+def load_placement_all_parallel(args, logger):
+    logger.info("Run all designs in dataset %s in parallel." % args.dataset)
+    mul_params = get_multiple_design_params(args.dataset_root, args.dataset)
+    for i, params in enumerate(mul_params):
+        logger.info("Augment "+params["design_name"])
+        cur_args = copy.deepcopy(args)
+        cur_args.design_name = params["design_name"]
+        # load the design information
+        dataset = load_dataset(cur_args, logger)
+        ## add solution path (25 designs)
+        solution_col_dir = os.path.join(args.solution_dir, params["design_name"], "AMF_solution")
+        solution_name_col = os.listdir(solution_col_dir)
+        ## split the solution names
+        solution_slice = splitfilecol2job(solution_name_col, cur_args.runs)
+
+        jobs = []
+        MacroHPWL_q = multiprocessing.Queue()
+        for j in range(cur_args.runs):
+            p = multiprocessing.Process(target=load_placement_calMacroHPWL, args=(cur_args, logger, dataset, solution_col_dir, solution_slice[j], MacroHPWL_q))
+            jobs.append(p)
+            p.start()
+            time.sleep(2)
+        for proc in jobs:
+            proc.join()
+        aug_MacroHPWL_col = []
+        for job_id in jobs:
+            aug_MacroHPWL_col.extend(MacroHPWL_q.get())
+        aug_MacroHPWL_col = sorted(aug_MacroHPWL_col, key=(lambda x: x[0][9:]))
+        logger.info("Finish augmenting "+params["design_name"])
+        writehpwl_placement(args, logger, solution_col_dir, aug_MacroHPWL_col)
+
+def writehpwl_placement(args, logger, base_dir_path, hpwl_col):
+    macroHPWL_path = os.path.join(base_dir_path, "MacroHPWL.txt")
+    f_hpwl = open(macroHPWL_path, "w")
+    hpwl_str = ""
+    for id in range(len(hpwl_col)):
+        hpwl_str += hpwl_col[id][0]
+        hpwl_str += " "
+        hpwl_str += str(hpwl_col[id][1])
+        hpwl_str += "\n"
+    f_hpwl.write(hpwl_str)
+    f_hpwl.close()
+
+        
+
+
+
+
+
+
+
+
+
+

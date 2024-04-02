@@ -5,6 +5,8 @@ class RegionConstrType:
         self.id = id
         self.num_boxes = num_boxes
         self.area = 0
+        self.bramarea = 0
+        self.dsparea = 0
         self.constrcol = []
         self.resource_usage = {"LUT":0, "FF":0, "CARRY8":0, "DSP48E2":0, "RAMB36E2":0, "IO":0}
         self.resource_supply = {"LUT":0, "FF":0, "CARRY8":0, "DSP48E2":0, "RAMB36E2":0, "IO":0}
@@ -35,8 +37,10 @@ class RegionConstrType:
         # For different kinds of cells, area is different
         if site.sitetype == "DSP":
             self.area += 2.5
+            self.dsparea += 2.5
         elif site.sitetype == "BRAM":
             self.area += 5
+            self.bramarea += 5
         else:
             self.area += 1
 

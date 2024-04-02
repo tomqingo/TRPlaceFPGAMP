@@ -19,7 +19,7 @@ solution.pl <br>
 
 1. Read the benchmark (Two modes: All designs in the benchmark or one design)
 
-2. Macro Placement (To do, now we use the random generation or the results in sample.pl)
+2. Macro Placement (Implement the macro placement using the online Reinforce Learning)
 
 3. Validate the legality of the placement result (The resource, coordinate, macro shape, and regional requirements)
 
@@ -40,6 +40,11 @@ options:
 --log_name      [optional]      string  log file name
 --eval_dir      [optional]      string  visualization directory
 --random_place  [optional]      str2bool If True, randomly place macros, or place them according to sample.pl.
+--is_training   [optional]      str2bool Whether we train/test a RL model for the macro placement
+--batch_size    [optional]      int      Online RL training batch size
+--epochs        [optional]      int      The training iterations
+--lr            [optional]      float    Learning rate
+--is_test       [optional]      str2bool Whether we test the RL Model
 ~~~
 
 # Directory in the repo
@@ -52,7 +57,9 @@ DiffMP: diffusion model for macro placement
 
 src: source code
 - db  Some data structures used to represent the nodes, nets, macros, and sitemaps.
-- MacroPl To do: intended for the macro placement
+- MacroPl: To do, intended for the final selected framework
+- model: Policy and Value Network
+- place_env: placement enironment for online RL
 
 thirdparty: Some extra tools we would use in the macro placement
 
@@ -70,9 +77,18 @@ If we want to run all the cases in mlcad2023_v2 using randomly placement
 ~~~
 $ python3 main.py --dataset_root /data/ssd/qluo/benchmark/mlcad_v2 --dataset mlcad2023 --run_all True --random_place True
 ~~~
+If we want to train the online RL model on Design_2
+~~~
+$  python3 main.py --is_training True --is_test False --epoch 30000 --design_name Design_2
+~~~
+If we want to test the online RL model after training on Design_2
+~~~
+$ python3 main.py --is_training True --is_test True --epoch 1 --design_name Design_2 --checkpoint_path save_models/Design_2/net_dict-Design_2-2320-2024-04-01-03-53-38-2788503.pkl
+~~~
 
 ### Dependencies
 
 * Python (version 3)
-* Pandas>=1.1.5
+* Pandas>=1.12.0
 * Numpy>=1.19.2
+* Gym>=0.18.0

@@ -36,7 +36,7 @@ def draw_macro_placement_result(args, dataset_obj, logger):
         for add_y in range(node_span[site_type]):
             site_map_matrix[node_inst.locX][node_inst.locY + add_y] = res_to_idx[site_type]
     
-    ###################### Mark macro net connection######################
+    ###################### Mark macro net connections ######################
     logger.info("Marking net connection between the two macros...")
     macro_connect = []
     distance_plot_thres = 450

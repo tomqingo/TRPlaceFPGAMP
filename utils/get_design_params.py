@@ -1,5 +1,6 @@
 import os
 import pdb
+import math
 
 # Find all the cases of mlcad2023
 def find_benchmark(dataset_root, benchmark):
@@ -65,3 +66,14 @@ def checkparam(param, logger):
         return False
     else:
         return True
+
+def splitfilecol2job(aug_file_num, njobs):
+    aug_file_num_slice = []
+    num_file_per_slice = math.ceil(len(aug_file_num)*1.0/njobs)
+    for id in range(njobs):
+        if id == njobs-1:
+            aug_file_num_slice.append(aug_file_num[id*num_file_per_slice:])
+        else:
+            aug_file_num_slice.append(aug_file_num[id*num_file_per_slice:(id+1)*num_file_per_slice])
+    return aug_file_num_slice
+

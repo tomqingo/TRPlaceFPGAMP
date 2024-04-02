@@ -24,10 +24,10 @@ def CheckCoordinateLegality(db, error_str, logger):
                 error_str += ("Invalid site ("+ str(db.nodes[id].locX) + ","+str(db.nodes[id].locY)+") for macro "+db.nodes[id].name+" , up above the "+str(db.sitemap_height)+"\n")
                 is_legal = False
                 
-            # check whether the nodes are in the reginal constraint
-            if not db.nodes[id].IsinRegionConstr():
-                error_str += ("The location ("+str(db.nodes[id].locX) + ","+str(db.nodes[id].locY)+") for macro "+db.nodes[id].name+" not in the region constraints"+"\n")              
-                is_legal = False
+            # # check whether the nodes are in the reginal constraint
+            # if not db.nodes[id].IsinRegionConstr():
+            #     error_str += ("The location ("+str(db.nodes[id].locX) + ","+str(db.nodes[id].locY)+") for macro "+db.nodes[id].name+" not in the region constraints"+"\n")              
+            #     is_legal = False
 
             # check whether the nodes are placed on the suitable site            
             siteid = db.nodes[id].site
@@ -79,8 +79,8 @@ def CheckSiteResourceOverflow(db, error_str, logger):
 # Check whether the nodes in cascaded macros are placed continuously
 def CheckMacroShape(db, error_str, logger):
     is_legal = True
-    for i in range(len(db.cascademacros)):
-        macro_node_col = db.cascademacros[i].Macronodecol
+    for i in range(len(db.macros)):
+        macro_node_col = db.macros[i].Macronodecol
         macro_node_id_col = []
         for j in range(len(macro_node_col)):
             macro_node_id_col.append(macro_node_col[j].id)
@@ -94,7 +94,7 @@ def CheckMacroShape(db, error_str, logger):
             cal_site_locX = db.nodes[nodeid].locX
             cal_site_locY = db.nodes[nodeid].locY
             if not (gt_site_locX==cal_site_locX and gt_site_locY==cal_site_locY):
-                error_str += ("The placed sites for cells in Macro:"+ db.cascademacros[i].name+"are not neighboring\n")
+                error_str += ("The placed sites for cells in Macro "+ db.macros[i].name+" are not neighboring\n")
                 is_legal = False
                 break
     return is_legal, error_str

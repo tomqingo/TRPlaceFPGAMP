@@ -6,6 +6,9 @@ from src.db import *
 from src.MacroPl import *
 import os
 from random import choice
+from torch.utils.data import Dataset
+import pdb
+
 
 class Dataset:
     def __init__(self, params):
@@ -19,36 +22,47 @@ class Dataset:
         self.CellType2ResourceType = {} #Find the resource types corresponding to the cell types 
         self.sitetype2Id = {} #Find the id using resource name
         self.cascademacrotype2Id = {} #Find the id using the macro type name
-        self.sitecolumns = {} #The site columns for each 
+        self.sitecolumns = {} #The site columns for each site
+        self.netid2placementnetid = {} #net id -> placementnet id
 
         # node, net, site sets
         self.nodes = [] #nodes col, the list variable
         self.nets = [] #nets col, the list variable
+        self.placementnets = [] # extract the placement nets
+        self.ports = [] #ports col, the list variable
         self.nodeswithRegionConstr = [] #nodes col with regional constraint
         self.clknets = [] #clk_nets col, the list variable
         self.highdegreenets = [] #high degree nets col, the list variable
         self.sites = [] #The sites that could place the nodes
+        self.BRAMsites = [] #The sites that could place the BRAMs
+        self.DSPsites = [] #The sites that could place the DSPs
+        self.BRAMgridcols = [] #The cols for BRAM placement
+        self.DSPgridcols = [] #The cols for DSP placement
+        self.BRAMgridrows = [] #The rows for BRAM placement
+        self.DSPgridrows = [] #The cols for DSP placement
 
         ## type sets
         self.resources = [] #resource type col {LUT, FF, CARRY8, DSP48E2, RAMB36E2, IO}
         self.sitetypes = [] #site type col {SLICE, DSP, BRAM, IO}
         self.cascademacrotypes = [] # macro type col {BRAM_CASCADE_x, DSP_CASCADE_x}
         self.cascademacros = [] #All the cascaded macro instances
+        self.macros = [] # All the macros (cascade macros + simple macros)
         self.regionconstrtype = [] #Region Constraint Type
 
         ##Basic information
         #netlist statistics
-        self.num_cells = 0 #number of the cells in lib
-        self.num_nodes = 0 
-        self.num_nets = 0
+        self.num_cells = 0 # number of the cells in lib
+        self.num_nodes = 0 # number of the nodes in the netlist
+        self.num_nets = 0 # number of the nets
+        self.num_placementnets = 0 # number of the external nets connecting the macros
         self.num_resource_demand = {"LUT":0, "FF":0, "CARRY8":0, "DSP48E2":0, "RAMB36E2":0, "IO":0}
         self.num_resource_supply = {"LUT":0, "FF":0, "CARRY8":0, "DSP48E2":0, "RAMB36E2":0, "IO":0}
         
         #Macro number statistics
-        self.num_basic_macro = 0  
+        self.num_basic_macro = 0    #number of the basic macros
         self.num_cascade_macro = 0  #number of cascaded macros
         self.num_cascade_node = 0   #number of nodes in the cascade macros
-        self.num_macro = 0
+        self.num_macro = 0          #number of the macros
 
         #SiteMap
         self.sitemap_width = 0
@@ -72,6 +86,14 @@ class Dataset:
 
         #number of high degree nets
         self.num_high_degree_nets = 0
+
+        #columns for placing DSP and BRAM
+        self.grid_width = 0  # the number of the grid columns (DSP/BRAM)
+        self.grid_height = 0 # the number of the grid heights
+        self.grid_col_width = []  # the number of the grid column width
+        self.gridcolid2colid = {} # the grid column id to the column id
+        self.colid2gridcolid = {} # the column id to the grid column
+
     
     # Read the design.nodes file
     def readNodes(self):
@@ -133,6 +155,8 @@ class Dataset:
                         # Add the macro pins to the macro set of the nets
                         if self.nodes[nodeid].is_macro:
                             net.addMacroPin(nodeid)
+                        if self.nodes[nodeid].IsIO():
+                            net.addIOPin(nodeid)
                     # Judge whether the net is high-degree net
                     net.setHighDegreeNet()
                     if net.ishighdegree:
@@ -144,7 +168,20 @@ class Dataset:
                     self.nets.append(net)
                     cur_line_id += 1
 
+    def ExtractPlacementNets(self):
+        # Simply consider the number of the macros
+        for net in self.nets:
+            for pinid in net.macropins:
+                cascadeid = self.nodes[pinid].cascade_id
+                if cascadeid not in net.cascademacropins:
+                    net.cascademacropins.append(cascadeid)
 
+        # Placement Nets
+        for net in self.nets:
+            if len(net.cascademacropins) >= 1 and (len(net.cascademacropins) + len(net.IOpins)) > 1:
+                self.placementnets.append(net)
+                self.netid2placementnetid[net.id] = len(self.placementnets) - 1
+    
     # Read the design.lib file                     
     def readCellLibs(self):
         with open(self.params["lib"], "r") as f_lib:
@@ -176,6 +213,7 @@ class Dataset:
     # Read the design.scl file
     def readSiteMaps(self):
         with open(self.params["sitemap"],"r") as f_scl:
+            prev_id = -1 # the previous id of the visited column
             all_lines = f_scl.read().splitlines()
             cur_line_id = 0
             while cur_line_id < len(all_lines):
@@ -233,16 +271,51 @@ class Dataset:
                         if cur_line_col[0] == "END" and cur_line_col[1] == "SITEMAP":
                             break
                         site = Site(cur_line_col[2], len(self.sites), int(cur_line_col[0]), int(cur_line_col[1]))
+                        
                         sitetype_id = self.sitetype2Id[cur_line_col[2]].id
                         site.addSupplyResource(self.sitetypes[sitetype_id].resource)
                         self.sitemaps[int(cur_line_col[0])][int(cur_line_col[1])] = len(self.sites)
                         self.sitemap_res[int(cur_line_col[0])][int(cur_line_col[1])] = self.sitetype2Id[cur_line_col[2]].id
                         self.sites.append(site)
+                        # Add the site in the BRAM
+                        if "BRAM" in cur_line:
+                            self.BRAMsites.append(site)
+                        elif "DSP" in cur_line:
+                            self.DSPsites.append(site)
                         for _, res_name in enumerate(list(self.sitetypes[sitetype_id].resource.keys())):     
                             self.num_resource_supply[res_name] += self.sitetypes[sitetype_id].resource[res_name] 
                             self.num_bel += 1
                         cur_line_id += 1
                         self.num_site_dict[cur_line_col[2]] += 1
+
+                        # record the position and the width of BRAM and DSP columns
+                        if "BRAM" in cur_line or ("DSP" in cur_line or "IO" in cur_line):
+                            self.colid2gridcolid[int(cur_line_col[0])] = len(self.colid2gridcolid) - 1
+                            self.gridcolid2colid[len(self.colid2gridcolid) - 1] = int(cur_line_col[0])
+                            # BRAM and DSP
+                            if "BRAM" in cur_line:
+                                if (len(self.colid2gridcolid) - 1) not in self.BRAMgridcols:
+                                    self.BRAMgridcols.append(len(self.colid2gridcolid) - 1)
+                                if int(cur_line_col[1]) not in self.BRAMgridrows:
+                                    self.BRAMgridrows.append(int(cur_line_col[1]))
+                            
+                            if "DSP" in cur_line:
+                                if (len(self.colid2gridcolid) - 1) not in self.DSPgridcols:
+                                    self.DSPgridcols.append(len(self.colid2gridcolid) - 1)
+                                if int(cur_line_col[1]) not in self.DSPgridrows:
+                                    self.DSPgridrows.append(int(cur_line_col[1]))
+
+                            if prev_id != -1 and prev_id != int(cur_line_col[0]):
+                                column_width = int(cur_line_col[0]) - prev_id
+                                prev_id = int(cur_line_col[0])
+                                self.grid_col_width.append(column_width)
+                            elif prev_id == -1:
+                                prev_id = int(cur_line_col[0])
+                    
+                    # (33, 200)
+                    self.grid_col_width.append(1)
+                    self.grid_width = len(self.gridcolid2colid)
+                    self.grid_height = self.sitemap_height
 
             for nodeid in range(len(self.nodes)):
                 celltype = self.nodes[nodeid].celltype
@@ -270,7 +343,8 @@ class Dataset:
                 realX = locX
                 realY = locY*26/30 + bel
                 siteid = self.sitemaps[int(cur_line_col[1])][int(cur_line_col[2])].astype("int")
-                self.nodes[nodeid].SetPlaceLocation(locX, locY, realX, realY, siteid) 
+                self.nodes[nodeid].SetPlaceLocation(locX, locY, realX, realY, siteid)
+                self.ports.append(self.nodes[nodeid])
 
     # Read the design.cascade_shape and design.cascade_shape_instances files
     def readCascadeMacros(self):
@@ -303,11 +377,11 @@ class Dataset:
                     cur_line_id += 1
                     continue
                 cur_line_col = cur_line.strip().split()
-                # A bug in the file
-                if cur_line_col[0] == "BRAM_cascade":
-                    cur_line_col[0] = "BRAM_cascade_2"
+                # # A bug in the file
+                # if cur_line_col[0] == "BRAM_cascade":
+                #     cur_line_col[0] = "BRAM_cascade_2"
                 if cur_line_col[0].upper() in list(self.cascademacrotype2Id.keys()):
-                    cascademacroinst = CascadeMacro(cur_line_col[3], len(self.cascademacros), cur_line_col[0].upper(), int(cur_line_col[1]), int(cur_line_col[2]))
+                    cascademacroinst = CascadeMacro(cur_line_col[3], len(self.cascademacros), cur_line_col[0].upper(), int(cur_line_col[2]), int(cur_line_col[1]))
                     sub_cur_line = all_lines[cur_line_id+2]
                     sub_cur_line_col = sub_cur_line.strip().split()
                     if not sub_cur_line_col[0] in list(self.nodeName2Id.keys()):
@@ -326,7 +400,24 @@ class Dataset:
                             else:
                                 cascademacroinst.addNode(self.nodes[subid], is_macro=False)
                     self.cascademacros.append(cascademacroinst)
+                    self.macros.append(cascademacroinst)
                 cur_line_id += (int(cur_line_col[1])+2)
+        
+        # add the simple macros in the macro list
+        for node in self.nodes:
+            if node.IsMacro() and not node.IsInCascadeMacro():
+                # cascade macro
+                cascademacroinst = CascadeMacro(node.name, len(self.macros), node.celltype, 1, 1)
+                self.nodes[node.id].cascade_id = len(self.macros)
+                cascademacroinst.addNode(self.nodes[node.id], is_macro=True)
+                self.macros.append(cascademacroinst)
+        
+        # pdb.set_trace()
+        # print all the cascade macros
+        # for macro in self.macros:
+        #     print(macro.name, macro.id)
+        # pdb.set_trace()
+
 
     # Read the design.regions file
     def readRegionConstraints(self):
@@ -380,6 +471,11 @@ class Dataset:
                         #print(self.nodes[nodeid].name, self.nodes[nodeid].resourcetype)
                         self.regionconstrtype[int(cur_line_col[1])].AddNode(self.nodes[nodeid])
                         self.nodes[nodeid].regionconstr.extend(self.regionconstrtype[int(cur_line_col[1])].constrcol)
+                        self.nodes[nodeid].regionconstrarea += self.regionconstrtype[int(cur_line_col[1])].area
+                        if self.nodes[nodeid].IsBRAM():
+                            self.nodes[nodeid].bramregionarea += self.regionconstrtype[int(cur_line_col[1])].bramarea
+                        if self.nodes[nodeid].IsDSP():
+                            self.nodes[nodeid].dspregionarea += self.regionconstrtype[int(cur_line_col[1])].dsparea
                         if self.nodes[nodeid].is_macro:
                             self.nodeswithRegionConstr.append(nodeid)
                         cur_line_id += 1
@@ -387,6 +483,15 @@ class Dataset:
             # calculate the area of the constrained region
             for regionconstr in self.regionconstrtype:
                 self.regionconstr_area.append(regionconstr.area)
+            
+            # set the bram and dsp constrained area to the maximum for other nodes
+            for node in self.nodes:
+                if node.regionconstrarea == 0:
+                    node.regionconstrarea = self.sitemap_width * self.sitemap_height
+                if node.bramregionarea == 0:
+                    node.bramregionarea = self.num_site_dict['BRAM'] * 5.0
+                if node.dspregionarea == 0:
+                    node.dspregionarea = self.num_site_dict['DSP'] * 2.5
 
     # Read the solution.pl file
     def readSamplePl(self, solution_path, logger):
@@ -419,14 +524,14 @@ class Dataset:
                     for subid in range(0,len(cascademacro_inst.Macronodecol)):
                         nodeid = cascademacro_inst.Macronodecol[subid].id
                         site_id = site_refer_id + subid
-                        site_locX, site_locY, real_locX, real_locY = self.sites[site_id].locX
-                        if not self.nodes.isPlace:
+                        site_locX, site_locY, real_locX, real_locY = self.sites[site_id].getLocation()
+                        if not self.nodes[nodeid].isPlace:
                             self.nodes[nodeid].SetPlaceLocation(site_locX, site_locY, real_locX, real_locY, site_id)
                             self.cascademacros[cascade_id].Macronodecol[subid].SetPlaceLocation(site_locX, site_locY, real_locX, real_locY, site_id)
                             self.sites[site_id].addNode(self.nodes[nodeid])
                         else:
                             node = self.nodes[nodeid]
-                            self.cascademacros[cascade_id].Macronodecol[subid].SetPlaceLocation(node.site_locX, node.site_locY, node.real_locX, node.real_locY, node.sitr_id)
+                            self.cascademacros[cascade_id].Macronodecol[subid].SetPlaceLocation(node.locX, node.locY, node.realX, node.realY, node.site)
 
     # Check whether the regions conatining (X, Y) is overflow
     def checkRegionFull(self, restype, Xcorr, Ycorr, left_right_boundary_slack, up_down_boundary_slack):
@@ -621,6 +726,9 @@ class Dataset:
         self.readFixedPl()
         logger.info("loading cascaded macro info")
         self.readCascadeMacros()
+        logger.info("Extract the placement nets")
+        self.ExtractPlacementNets()
+        logger.info("Number of the placement nets:"+str(len(self.placementnets)))
         logger.info("loading region constraints")
         self.readRegionConstraints()
 
@@ -628,10 +736,15 @@ class Dataset:
         self.num_cells = len(self.cellLib)
         self.num_nodes = len(self.nodes)
         self.num_nets = len(self.nets)
+        self.num_placementnets = len(self.placementnets)
         self.num_clk_nets = len(self.clknets)
         self.num_high_degree_nets = len(self.highdegreenets)
         self.num_region_constr = len(self.regionconstrtype)
         self.num_cascade_macro = len(self.cascademacros)
+        self.num_macro = len(self.macros)
+        self.num_basic_macro = self.num_macro - self.num_cascade_macro
+
+        self.nodeidlist = list(range(self.num_macro))
 
         for id in range(len(self.nodes)):
             nodeper = self.nodes[id]
@@ -639,9 +752,7 @@ class Dataset:
                 self.num_resource_demand[nodeper.resourcetype] += 1
             if nodeper.is_fixed:
                 self.num_fix += 1
-            if nodeper.is_macro and nodeper.cascade_id == -1:
-                self.num_basic_macro += 1
-            if nodeper.is_macro and nodeper.cascade_id != -1:
+            if nodeper.IsMacro() and nodeper.IsInCascadeMacro():
                 self.num_cascade_node += 1
             if nodeper.regionconstr_type != -1:
                 self.num_region_constr_node += 1
@@ -685,6 +796,7 @@ class Dataset:
         for res_id, res_name in enumerate(list(self.num_resource_supply.keys())):
             str_out = str_out + res_name + ":"+str(self.num_resource_supply[res_name])+" "
         logger.info(str_out)
+
 
 
 # load the benchamark

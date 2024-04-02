@@ -8,9 +8,12 @@ class PlacementUnit:
         self.is_macro = is_macro # macro or not macro
         self.is_cascade = is_cascade # cascade macro or the non_cascade macro
         self.num_cells = 0 # the number of cells in the placement unit
+        self.area = 0 # the area for the cells occupy
         self.hasRegionConstr = hasRegionConstr # Whther the placement unit has the region constr requirement
         self.nodeidcol = [] # The nodes in the placement units
         self.placementnetidcol = [] # The placement nets attached to the placement units
+        self.nodeid2offset = {} # the nodeid to the offset in the placement unit
+
         self.degree = 0 # The number of nodes (not the same cascaded macros) connected
         self.internalnetnum = 0 # The number of the nets in the cascaded macros
         self.connExternalMacronum = 0 # The number of macros (not the same cascaded macros) connected
@@ -18,17 +21,38 @@ class PlacementUnit:
         self.connDSPnum = 0 # The DSP macros directly connected
         self.connIOnum = 0 # The number of IO ports connected
         self.connLUTFFnum = 0 # The number of LUT/FFs connected
+        self.regionconstrarea = 0  # The area of the regional constraint (number of the corresponding sites in the region)
+
         #location
         self.locX = 0
         self.locY = 0
+        self.realX = 0
+        self.realY = 0
     
     def addNode(self, nodeid):
         self.nodeidcol.append(nodeid)
-        self.num_cells = self.num_cells + 1
+        self.num_cells += 1
+        if self.isBRAM():
+            self.area +=  5
+        if self.isDSP():
+            self.area += 2.5
     
-    def setLocation(self, locX, locY):
+    def updateNodeOffset(self):
+        CenterY = self.area * 1.0 / 2
+        cnt = 0
+        for nodeid in self.nodeidcol:
+            if self.isBRAM():
+                nodeY = cnt * 5 + 5 / 2
+            if self.isDSP():
+                nodeY = cnt * 2.5 + 2.5 / 2
+            offsetY = CenterY - nodeY
+            self.nodeidcol[nodeid] = offsetY
+    
+    def setLocation(self, locX, locY, realX, realY):
         self.locX = locX
         self.locY = locY
+        self.realX = realX
+        self.realY = realY
     
     def getNodeSet(self):
         return self.nodeidcol
@@ -47,31 +71,38 @@ class PlacementNet:
         self.id = id
         self.pinnum = 0
         self.placementunitidcol = []
+        self.nodeidcol = {}
     
-    def addPin(self, placementunitid):
-        self.placementunitidcol.append(placementunitid)
-        self.pinnum = self.pinnum + 1
+    def addPin(self, placementunitid, nodeid):
+        if not placementunitid in list(self.nodeidcol.keys()):
+            self.placementunitidcol.append(placementunitid)
+            self.nodeidcol[placementunitid] = [nodeid]
+            self.pinnum += 1
+        else:
+            self.nodeidcol[placementunitid].append(nodeid)
+
 
 class PlacementInfo:
     def __init__(self, database):
         self.database = database
         self.placementunits = []
         self.placementnets = []
+        self.ports = []
         self.nodeId2placementunitId = {} # node Id to the placement unit Id containing it
+        self.nodeId2portId = {} # node id to the port id
     
     def ConvertNodes2PlacementUnits(self, logger):
         logger.info("Convert the node list to the placement units")
         placementunit_id = 0 # placement unit id
+        fixedunit_id = 0 # the id for the fixed unit
         # Find all the nodes in the placement units (Simple Macros and Cascade Macros)
         for id in range(len(self.database.nodes)):
             node = self.database.nodes[id]
             # Judge whether the nodes are already in the nodeId2placementunitId
-            if node.id in list(self.nodeId2placementunitId.keys()):
-                continue
             if node.is_macro:
                 # Simple Macro
                 if node.cascade_id == -1:
-                    placementunit_inst = PlacementUnit(placementunit_id, node.resourcetype, True, False, node.hasRegionConstr())
+                    placementunit_inst = PlacementUnit(placementunit_id, node.resourcetype, True, False, node.hasRegionConstr())                    
                     placementunit_inst.addNode(node.id)
                     self.nodeId2placementunitId[node.id] = placementunit_id
                 else:
@@ -84,9 +115,20 @@ class PlacementInfo:
                     for id in range(len(NodeinMacrocol)):
                         placementunit_inst.addNode(NodeinMacrocol[id].id)
                         self.nodeId2placementunitId[NodeinMacrocol[id].id] = placementunit_id
+                placementunit_inst.updateNodeOffset()
+                if node.IsBRAM():
+                    placementunit_inst.regionconstrarea = node.bramregionarea
+                elif node.IsDSP():
+                    placementunit_inst.regionconstrarea = node.dspregionarea
                 self.placementunits.append(placementunit_inst)
-                placementunit_id = placementunit_id + 1
+                placementunit_id += 1
+            elif node.is_fixed:
+                fixPlacementunit = PlacementUnit(fixedunit_id, node.resourcetype, False, False, False)
+                self.ports.append(fixPlacementunit)
+                self.nodeId2portId[node.id] = fixedunit_id
+                fixedunit_id += 1
         logger.info("Num of Placement Units: {}".format(placementunit_id))
+        logger.info("Num of Fixed Units: {}".format(fixedunit_id))
 
     
     def ConvertNets2PlacementNets(self, logger):
@@ -100,8 +142,10 @@ class PlacementInfo:
             num_ConnTo_IO = 0 # the number of the IO ports connected
             num_ConnTo_BRAM = 0 # the number of the BRAMs connected
             num_ConnTo_DSP = 0 # the number of the DSPs connected
-            pindict = {}
-            nodedict = {}
+            pindict = {} # the dictionary for the macro set
+            nodedict = {} # the dictionary for the node set
+            portdict = {} # the dictionary for the port set
+
             for pin_id in range(len(net.pins)):
                 node_id = net.pins[pin_id][0]
                 # Judge whether the pin is Macro 
@@ -113,15 +157,17 @@ class PlacementInfo:
                         # Add the macro pin to the pin set
                         if not placementunit_id in list(pindict.keys()):
                             pindict[placementunit_id] = 1
-                            placementnet_inst.addPin(placementunit_id)
                             num_ConnTo_BRAM += int(self.placementunits[placementunit_id].isBRAM())
                             num_ConnTo_DSP += int(self.placementunits[placementunit_id].isDSP())                        
                         else:
                             pindict[placementunit_id] += 1
+                        placementnet_inst.addPin(placementunit_id, node_id)
                 else:
                     # Calculate the number of IO ports that the net connect
                     if self.database.nodes[node_id].IsIO():
                         num_ConnTo_IO += 1
+                        portdict[node_id] = 1
+
                     else:
                     # Calculate the number of LUTs/FFs that the net connect
                         num_ConnTo_LUTFF += 1

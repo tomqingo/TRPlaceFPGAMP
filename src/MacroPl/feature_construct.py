@@ -41,8 +41,12 @@ class FeatureExtractor:
             connDSPMacronum = placementunit.connDSPnum
             # internal nets for cascaded macros
             internalnetnum = placementunit.internalnetnum
+            # regionconstr area
+            regionconstrarea = placementunit.regionconstrarea
+            # total area
+            area = placementunit.area
 
-            node_feature.extend([degree, connExternalMacronum, connIOnum, connLUTFFnum, connBRAMMacronum, connDSPMacronum, internalnetnum])            
+            node_feature.extend([degree, connExternalMacronum, connIOnum, connLUTFFnum, connBRAMMacronum, connDSPMacronum, internalnetnum, regionconstrarea, area])            
             node_feature_col.append(node_feature)
         self.node_feature_map = np.array(node_feature_col)
     
