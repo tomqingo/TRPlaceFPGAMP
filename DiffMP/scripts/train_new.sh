@@ -1,4 +1,4 @@
-python -m torch.distributed.launch --nproc_per_node=1 --master_port=12235 --use_env run_train.py \
+CUDA_LAUNCH_BLOCKING=1 python -m torch.distributed.launch --nproc_per_node=1 --master_port=12235 --use_env run_train.py \
 --diff_steps 2000 \
 --lr 0.0001 \
 --learning_steps 50000 \

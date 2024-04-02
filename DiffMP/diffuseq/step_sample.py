@@ -5,6 +5,7 @@ import torch as th
 import torch.distributed as dist
 
 
+# sampling to sample the time steps in accelerating the diffusion process
 def create_named_schedule_sampler(name, diffusion):
     """
     Create a ScheduleSampler from a library of pre-defined samplers.
@@ -41,6 +42,7 @@ class ScheduleSampler(ABC):
         The weights needn't be normalized, but must be positive.
         """
 
+    # importance sampler
     def sample(self, batch_size, device):
         """
         Importance-sample timesteps for a batch.
@@ -59,6 +61,8 @@ class ScheduleSampler(ABC):
         weights = th.from_numpy(weights_np).float().to(device)
         return indices, weights
 
+
+# there are many implemtations
 
 class UniformSampler(ScheduleSampler):
     def __init__(self, diffusion):

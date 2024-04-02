@@ -75,7 +75,7 @@ class Options():
         self.parser.add_argument("--world_size", type=int, default=1,
                         help="For distributed training: world_size")
         self.parser.add_argument('--seed', type=int, default=0, help="random seed for initialization")
-        self.parser.add_argument('--save_freq', type=int, default=1000, help="random seed for initialization")
+        self.parser.add_argument('--save_freq', type=int, default=1000, help="save frequency")
         self.parser.add_argument("--worker", type=int, default=3,
                         help="number of workers for dataloader")
         self.parser.add_argument('--wandb', action='store_true')

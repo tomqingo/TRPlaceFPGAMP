@@ -6,12 +6,12 @@ DIM2=256
 
 CUDA_VISIBLE_DEVICES=${GPU} python ../pretrain_model_pareto.py \
 --world_size 1 \
---worker 8 \
+--worker 2 \
 --checkpoint_dir ${DATASET} \
 --dataset ${DATASET} \
 --split random \
 --pretrain_label_dir ../MP_pretrain_labels \
---total_steps 10000 \
+--total_steps 50000 \
 --warmup_step 100 \
 --per_gpu_batch_size ${BSZ} \
 --batch_size_multiplier_minsg 1 \
@@ -32,7 +32,7 @@ CUDA_VISIBLE_DEVICES=${GPU} python ../pretrain_model_pareto.py \
 --n_layer 2 \
 --dropout 0. \
 --seed 2345 \
---save_freq 10000 \
+--save_freq 1000 \
 --hetero_graph_path ../MP_hetero_graphs \
 --use_prelu \
 --tasks p_recon p_ming p_decor p_minsg p_link 

@@ -19,7 +19,8 @@ python dataset_parser.py
 ```
 
 # GNN pretraining
-Different version of DGL is involved because the original repo uses an old version, but that doesn't work on our CUDA. The hetero graphs will be saved in ParetoGNN/MP_hetero_graphs, the links and labels will be saved in ParetoGNN/MP_links and ParetoGNN/MP_pretrain_labels. The pretrained checkpoints will be saved in ParetoGNN/scripts.
+Different version of DGL is involved because the original repo uses an old version, but that doesn't work on our CUDA. 
+The hetero graphs will be saved in ParetoGNN/MP_hetero_graphs, the links and labels will be saved in ParetoGNN/MP_links and ParetoGNN/MP_pretrain_labels. The pretrained checkpoints will be saved in ParetoGNN/scripts.
 ```
 cd ParetoGNN
 

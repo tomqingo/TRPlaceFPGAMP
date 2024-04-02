@@ -1,5 +1,5 @@
 """
-Train a diffusion model on images.
+Train the diffusion model on images.
 """
 
 import argparse
@@ -16,6 +16,7 @@ from basic_utils import (
 )
 from train_util import TrainLoop
 from transformers import set_seed
+# Learn how to use wandb
 import wandb
 
 ### custom your wandb setting here ###
@@ -40,25 +41,30 @@ def main():
 
     logger.log("### Creating model and diffusion...")
 
+    # create the diffusion model
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, load_defaults_config().keys())
     )
 
     model.to(args.device)
 
-    data, data_valid = load_data_text(
+    # load the training and validation set 
+    data, data_valid = load_data_text( 
         batch_size=args.batch_size,
         split='train',
         metric_enc=model.metric_enc,
-        place_enc=model.place_enc,
-        region_enc=model.region_enc,
+        dsp_place_enc=model.dsp_place_enc,
+        bram_place_enc=model.bram_place_enc,
+        region_enc=model.region_enc,      
         device = args.device,
     )
 
-
+    # The number of the parameters
     pytorch_total_params = sum(p.numel() for p in model.parameters())
 
     logger.log(f'### The parameter count is {pytorch_total_params}')
+
+    
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
 
     logger.log(f'### Saving the hyperparameters to {args.checkpoint_path}/training_args.json')

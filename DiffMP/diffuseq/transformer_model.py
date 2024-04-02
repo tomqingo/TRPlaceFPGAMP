@@ -271,7 +271,7 @@ class TransformerNetModel(nn.Module):
         self.ln_post = nn.LayerNorm(width, device=device, dtype=dtype)
 
         self.metric_enc = nn.Linear(1, width, device=device, dtype=dtype)
-        self.place_enc = nn.Embedding(2282, width//2, device=device, dtype=dtype)
+        self.place_enc = nn.Embedding(3002, width//2, device=device, dtype=dtype)
         self.region_enc = nn.Linear(4, width//4, device=device, dtype=dtype)
         ### TODO: self.graph_enc = GNN
         self.graph_enc = None

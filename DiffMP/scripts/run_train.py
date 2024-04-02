@@ -7,9 +7,11 @@ sys.path.append('.')
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='training args.')
+    # dataset name/directory
     parser.add_argument('--dataset', type=str, default='', help='name of training dataset')
     parser.add_argument('--data_dir', type=str, default='', help='path to training dataset')
 
+    # noise scheduling
     parser.add_argument('--noise_schedule', type=str, default='cosine', choices=['linear', 'cosine', 'sqrt', 'trunc_cos', 'trunc_lin', 'pw_lin'], help='the distribution of noises')
     parser.add_argument('--diff_steps', type=int, default=4000, help='diffusion steps')
     parser.add_argument('--schedule_sampler', type=str, default='uniform', choices=['uniform', 'lossaware', 'fixstep'], help='schedule sampler of timesteps')
@@ -37,20 +39,27 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # set working dir to the upper folder
+    # absolute path
     abspath = os.path.abspath(sys.argv[0])
+    # directory name of the absolute path
     dname = os.path.dirname(abspath)
     dname = os.path.dirname(dname)
+
+    # change the current path to the dname
     os.chdir(dname)
 
     folder_name = "diffusion_models/"
 
+    # setup the folder
     if int(os.environ['LOCAL_RANK']) == 0:
         if not os.path.isdir(folder_name):
             os.mkdir(folder_name)
 
+    # model name
     Model_FILE = f"diffuseq_{args.dataset}_h{args.hidden_dim}_lr{args.lr}" \
                 f"_t{args.diff_steps}_{args.noise_schedule}_{args.schedule_sampler}" \
                 f"_seed{args.seed}"
+    
     if args.notes:
         args.notes += time.strftime("%Y%m%d-%H:%M:%S")
         Model_FILE = Model_FILE + f'_{args.notes}'
@@ -81,4 +90,5 @@ if __name__ == '__main__':
             print(COMMANDLINE, file=f)
 
     print(COMMANDLINE)
+    # convert the string to the command using the system function
     os.system(COMMANDLINE)

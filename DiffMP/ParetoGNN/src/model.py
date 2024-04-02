@@ -21,11 +21,15 @@ class Link_Pred(torch.nn.Module):
 class PretrainModule(torch.nn.Module):
     def __init__(self, big_model, predictor_dim):
         super(PretrainModule, self).__init__()
+        # encoder
+        # encoder hidden dimesion (the output of GNN : 128)
         hid_dim = big_model.hid_dim
         self.big_model = big_model
         
         # link prediction head
+        # head 1 for the link prediction (128, 512), (512, 1)
         self.link_predictor_hid = torch.nn.Linear(hid_dim, predictor_dim)
+        # the link of the class
         self.link_predictor_class = torch.nn.Linear(predictor_dim, 1)
         
         # graph matching head
@@ -35,7 +39,9 @@ class PretrainModule(torch.nn.Module):
         # discriminator for ming
         self.discriminator = Discriminator(hid_dim)
 
-        # head for metis partition cls
+        # head for metis partition cls (512, 10) partitioning in the initial placement
+        # cut size is a little bit large
+        # predict the partitions given the node feature, and net connection?
         self.metis_cls = torch.nn.Linear(hid_dim, 10)
 
         # head for metis partition clsss
@@ -47,24 +53,27 @@ class PretrainModule(torch.nn.Module):
                                         torch.nn.Linear(predictor_dim, hid_dim))
 
         # head for decor
+        # head for the decoder (Why decoder)
         self.decor = torch.nn.Sequential(torch.nn.Linear(hid_dim, predictor_dim),
                                         torch.nn.ReLU(),
                                         torch.nn.Linear(predictor_dim, hid_dim))
 
-        # head for feature reconstruction
+        # head for feature reconstruction (reconstruct original features)
         self.recon_mask = torch.nn.Parameter(torch.zeros(1, big_model.node_module.in_feats))
         self.recon_enc_dec = torch.nn.Linear(hid_dim, hid_dim, bias=False)
         self.decoder = dgl.nn.GraphConv(hid_dim, big_model.node_module.in_feats, allow_zero_in_degree=True)
+
         for m in self.modules():
             self.weights_init(m)
 
     def weights_init(self, m):
-
+        # parameters in the bilinear layer
         if isinstance(m, nn.Bilinear):
             torch.nn.init.xavier_uniform_(m.weight.data)
             if m.bias is not None:
                 m.bias.data.fill_(0.0)
 
+        # parameters in the linear layer
         if isinstance(m, nn.Linear):
             torch.nn.init.xavier_uniform_(m.weight.data)
             if m.bias is not None:
@@ -103,17 +112,24 @@ class PretrainModule(torch.nn.Module):
 
 
     def p_link(self, sg, pos_u, pos_v, neg_u, neg_v):
+        # hidden expression
         h = self.big_model(sg)
+        # normalization of the hidden expression
         h = F.normalize(h, dim=1)
+        # the output of the link
         h = F.relu(self.link_predictor_hid(h))
+        # Why pos_u multiply the pos_v? (angle-similarity: similar 1) pos_u, pos_v
         h_pos = h[pos_u] * h[pos_v]
+        # Why neg_u multiply the neg_v? (angle-similarity: similar 0)
         h_neg = h[neg_u] * h[neg_v]
+        # the output is a probability
         pos_logits = self.link_predictor_class(h_pos).squeeze()
         neg_logits = self.link_predictor_class(h_neg).squeeze()
         logits = torch.cat([torch.sigmoid(pos_logits), torch.sigmoid(neg_logits)])
         target = torch.cat([torch.ones_like(pos_logits),torch.zeros_like(neg_logits)])
         return F.binary_cross_entropy(logits, target)
     
+    # discrimator (features and labels)
     def p_ming(self, bg, feat, cor_feat):
         positive = self.big_model(bg, feat)
         negative = self.big_model(bg, cor_feat)
@@ -125,6 +141,7 @@ class PretrainModule(torch.nn.Module):
         l2 = F.binary_cross_entropy(torch.sigmoid(negative), torch.zeros_like(negative))
         return l1 + l2
 
+    
     def p_minsg(self, g1, feat1, g2, feat2, temperature):
         
         def get_loss(h1, h2, temperature):
@@ -178,12 +195,17 @@ class PretrainModule(torch.nn.Module):
 class BigModel(torch.nn.Module):
     def __init__(self, node_module, graph_module, hid_dim):
         super(BigModel, self).__init__()
-
+        # GCN as the node module
         self.node_module = node_module
+        # No graph module
         self.graph_module = graph_module
+        # the dimension of the outputs for GCN
         self.hid_dim = node_module.n_classes
         self.inter_mid = hid_dim
+
         # this is a universal projection head, agnostic of downstream task
+        # project the output of the GCN to another spaces
+        # But in this code, the linear projection is useless
         if hid_dim > 0:
             if graph_module != None:
                 self.projection = torch.nn.Linear(node_module.n_classes + graph_module.hid_dim , hid_dim)
@@ -199,6 +221,7 @@ class BigModel(torch.nn.Module):
 
 
     def weights_init(self, m):
+        # initialize the weights with xavier_uniform_ initialization
         if isinstance(m, nn.Linear):
             torch.nn.init.xavier_uniform_(m.weight.data)
             if m.bias is not None:
@@ -206,6 +229,7 @@ class BigModel(torch.nn.Module):
 
     def forward(self, G, X=None):
         if type(G) is list:
+            # node module (GCN)
             node = self.node_module(G)
             if self.graph_module == None:
                 if self.inter_mid > 0:
@@ -232,7 +256,7 @@ class BigModel(torch.nn.Module):
             else:
                 return node
 
-
+# GCN model
 class GCN(torch.nn.Module):
     def __init__(self,
                  in_feats,
@@ -241,11 +265,16 @@ class GCN(torch.nn.Module):
                  norm,
                  prelu):
         super(GCN, self).__init__()
+        # Module
+        # layers to represent the graph convolution
         self.layers = torch.nn.ModuleList()
         self.norms = torch.nn.ModuleList()
         self.activations = torch.nn.ModuleList()
+        # establish (input features, out_features)
+        # [in_feats, 256, 128] (2-3 layers are good enough)
         self.in_feats = in_feats
         hidden_lst = [in_feats] + hidden_lst
+        # Graph_conv (in_feats, 256), (256, 128), bn (256, 128), activations (ReLU or pReLU)
         for in_, out_ in zip(hidden_lst[:-1], hidden_lst[1:]):
             self.layers.append(dgl.nn.GraphConv(in_, out_, allow_zero_in_degree=True))
             self.norms.append(torch.nn.BatchNorm1d(out_, momentum=0.99) if norm == 'batch' else \
@@ -253,17 +282,22 @@ class GCN(torch.nn.Module):
             self.activations.append(torch.nn.PReLU() if prelu else torch.nn.ReLU())
 
         self.dropout = torch.nn.Dropout(p=dropout)
+        # the last layer
         self.n_classes = hidden_lst[-1]
 
     def forward(self, g, features=None):
+        # g is the graph/why is g_{i}?/why g_{i} would be a list? Why they multiply sequentially
         if type(g) is list:
             h = g[0].ndata['feat']['_N'].to(self.layers[-1].weight.device)
             for i, layer in enumerate(self.layers):
+                # the input would not use dropout
                 if i != 0:
                     h = self.dropout(h)
+                # forward (1st para: graph (used for calculating the ), 2nd para: features)
                 h = layer(g[i].to(self.layers[-1].weight.device), h)
                 h = self.activations[i](self.norms[i](h))
         else:
+            # get the immediate features, features (N,D_in)
             h = features
             for i, layer in enumerate(self.layers):
                 if i != 0:

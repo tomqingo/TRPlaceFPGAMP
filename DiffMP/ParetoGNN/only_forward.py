@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/research/d4/gds/qjwang21/DiffuSeq_MP/ParetoGNN')
+sys.path.append('/research/d1/gds/qluo22/Cumple/DiffMP/ParetoGNN/')
 
 from src.options import Options
 import os
@@ -150,6 +150,7 @@ def get_node_emb(checkpoint_path, design_name='MacroPlacement'):
     tvt_addr = None
     split = 'random'
     hetero_graph_path = 'ParetoGNN/MP_hetero_graphs'
+    # get the embedding
     g = src.data.load_data(design_name, 
         pretrain_label_dir = pretrain_label_dir, 
         mask_edge = mask_edge, 

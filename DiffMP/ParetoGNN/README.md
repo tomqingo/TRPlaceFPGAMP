@@ -7,7 +7,7 @@ Hi all, this is the official repository for ICLR 2023 paper: **Multi-task Self-s
 
 ## Instruction
 
-To reproduce our experiment, you need to first run the python code ```hetero_graph_gen.py``` to generate the DGL graph objects for heterophilous graphs (i.e., Chameleon, Actor, and Squirrel) and ```link_gen.py``` to prepare training/validation/testing splits for the evaluation on link prediciton. The ```link_gen.py``` may require an environment with 128GB RAM due to the size of ogb-product graph. If you have limited RAM and are not interested in running experiments about ogb-product, you can comment out its link generation code block. 
+To reproduce our experiment, you need to first run the python code ```hetero_graph_gen.py``` to generate the DGL graph objects for heterophilous graphs (i.e., Chameleon, Actor, and Squirrel) and ```link_gen.py``` to prepare training/validation/testing splits for the evaluation on link prediciton. The ```link_gen.py``` may require an environment with 128GB RAM (total memory capacity) due to the size of ogb-product graph. If you have limited RAM and are not interested in running experiments about ogb-product, you can comment out its link generation code block. 
 
 You can finish these two steps by simply run commands as follows:
 

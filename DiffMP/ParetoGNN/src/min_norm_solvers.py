@@ -184,7 +184,7 @@ class MinNormSolver:
         
         return sol_vec, nd
 
-
+# normalize the gradient
 def gradient_normalizers(grads, losses, normalization_type):
     gn = {}
     if normalization_type == 'l2':

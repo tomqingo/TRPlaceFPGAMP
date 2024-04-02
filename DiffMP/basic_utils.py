@@ -15,10 +15,10 @@ def load_defaults_config():
     with open('diffuseq/config.json', 'r') as f:
         return json.load(f)
 
-
+# Create the diffusion model (linear attention transformer)
 def create_model_and_diffusion(
     diffusion_steps,
-    noise_schedule,
+    noise_schedule,                   # used for the noise generating
     learn_sigma,
     timestep_respacing,
     predict_xstart,
@@ -31,13 +31,14 @@ def create_model_and_diffusion(
 ):
 
     ### New transformer model -> save memory and handle longer sequence
+    ### Utilize the linear attention (transformer)
     model = LinearAttentionTransformerLM(
-        num_tokens = 2282,
+        num_tokens = 3002,              # DSP positions: 2282, BRAM positions: 720
         dim = 512,
-        heads = 8,
-        depth = 1,
+        heads = 8,                      # multi-head
+        depth = 1,                      
         # max_seq_len = 2282,
-        max_seq_len = 2304,
+        max_seq_len = 3072,             # Why the maximum length of the sequences is 2304?
         causal = True,                  # auto-regressive or not
         ff_dropout = 0.1,               # dropout for feedforward
         attn_layer_dropout = 0.1,       # dropout right after self-attention layer
@@ -55,11 +56,14 @@ def create_model_and_diffusion(
         device = device,
     )
 
+    # get the beta parameters in the denoising
+    # initializing the beta parameter
     betas = gd.get_named_beta_schedule(noise_schedule, diffusion_steps)
 
     if not timestep_respacing:
         timestep_respacing = [diffusion_steps]
 
+    # several time intervals to diffuse the image
     diffusion = SpacedDiffusion(
         use_timesteps=space_timesteps(diffusion_steps, timestep_respacing),
         betas=betas,

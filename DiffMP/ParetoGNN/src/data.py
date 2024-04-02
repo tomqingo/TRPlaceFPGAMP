@@ -7,13 +7,17 @@ import pickle
 from sklearn.preprocessing import StandardScaler
 
 def preprocess(graph, no_self_loop=False):
+    # get features
     feat = graph.ndata["feat"]
+    # bidrectional graph
     graph = dgl.to_bidirected(graph)
     graph.ndata["feat"] = feat
+    # remove the self loop in the graph
     if not no_self_loop:
         graph = graph.remove_self_loop().add_self_loop()
     else:
         graph = graph.remove_self_loop()
+    # create all the formats ('coo', 'csr', 'csc')
     graph.create_formats_()
     return graph
 
@@ -24,23 +28,34 @@ def scale_feats(x):
     feats = torch.from_numpy(scaler.transform(feats)).float()
     return feats
 
+# k-fold cross validation (split the dataset into the train, val and test)
 def cross_validation_gen(y, k_fold=10):
     from sklearn.model_selection import StratifiedKFold
+    # k-evenly division
     skf = StratifiedKFold(n_splits=k_fold)
+
+    # split the datasets into training, validation and testing
     train_splits = []
     val_splits = []
     test_splits = []
 
+    # Why it is (y, y)? get the indices in the training_group and testing group
     for larger_group, smaller_group in skf.split(y, y):
+        # Why smaller group is train_y?
         train_y = y[smaller_group]
         sub_skf = StratifiedKFold(n_splits=k_fold)
+        # in the training set, we get the train, and validation set
         train_split, val_split = next(iter(sub_skf.split(train_y, train_y)))
+
+        # train, val, test
         train = torch.zeros_like(y, dtype=torch.bool)
         train[smaller_group[train_split]] = True
         val = torch.zeros_like(y, dtype=torch.bool)
         val[smaller_group[val_split]] = True
         test = torch.zeros_like(y, dtype=torch.bool)
         test[larger_group] = True
+
+        # train_splits, val_splits, test_splits
         train_splits.append(train.unsqueeze(1))
         val_splits.append(val.unsqueeze(1))
         test_splits.append(test.unsqueeze(1))
@@ -48,6 +63,7 @@ def cross_validation_gen(y, k_fold=10):
     return torch.cat(train_splits, dim=1), torch.cat(val_splits, dim=1), torch.cat(test_splits, dim=1)
 
 def load_data(data_name, pretrain_label_dir, mask_edge, tvt_addr, split='random', hetero_graph_path = None, no_self_loop=False):
+    # wiki-cs
     if data_name == 'wiki_cs':
         dataset = dgl.data.WikiCSDataset()
         g = dataset[0]
@@ -59,7 +75,7 @@ def load_data(data_name, pretrain_label_dir, mask_edge, tvt_addr, split='random'
         else:
             g.ndata['train_mask'], g.ndata['val_mask'],  g.ndata['test_mask'] = \
                 g.ndata['train_mask'], g.ndata['val_mask'],  g.ndata['test_mask'].unsqueeze(1).expand_as(g.ndata['val_mask'])
-
+    # coauthor-cs
     elif data_name == 'co_cs':
         dataset = dgl.data.CoauthorCSDataset()
         g = dataset[0]
@@ -68,7 +84,7 @@ def load_data(data_name, pretrain_label_dir, mask_edge, tvt_addr, split='random'
         # no public split is given
         train_mask, val_mask, test_mask = cross_validation_gen(g.ndata['label'])
         g.ndata['train_mask'], g.ndata['val_mask'], g.ndata['test_mask'] = train_mask, val_mask, test_mask
-
+    # coauthor-physics
     elif data_name == 'co_phy':
         dataset = dgl.data.CoauthorPhysicsDataset()
         g = dataset[0]
@@ -146,8 +162,10 @@ def load_data(data_name, pretrain_label_dir, mask_edge, tvt_addr, split='random'
         if split == 'random':
             train_mask, val_mask, test_mask = cross_validation_gen(g.ndata['label'])
             g.ndata['train_mask'], g.ndata['val_mask'],  g.ndata['test_mask'] = train_mask, val_mask, test_mask
-
+    
+    # mlcad benchmark
     elif "Design" in data_name:
+        # load the dataset (Why does not load several benchmarks?)
         dataset, _ = dgl.load_graphs(hetero_graph_path + '/%s.bin' % data_name)
         g = dataset[0]
         # std, mean = torch.std_mean(g.ndata['feat'], dim=0, unbiased=False)
@@ -186,13 +204,16 @@ def load_data(data_name, pretrain_label_dir, mask_edge, tvt_addr, split='random'
     else:
         assert Exception('Invalid Dataset')
 
+    # node assignment for each data
     g.ndata['node_assignment'] = torch.load(pretrain_label_dir+'/metis_label_{}.pt'.format(data_name))
     g = preprocess(g, no_self_loop)
-    # normalize graphs with discrete features
+
+    # normalize graphs with discrete features and continuous features
     norm = StandardScaler()
     norm.fit(g.ndata['feat'])
     g.ndata['feat'] = torch.tensor(norm.transform(g.ndata['feat'])).float()
     
+    # remove the connections in the validation and test (validation_false, test_false?)
     if mask_edge:
         _, _, val_edges, _, test_edges, _ = pickle.load(open(tvt_addr, 'rb'))
         lst = []

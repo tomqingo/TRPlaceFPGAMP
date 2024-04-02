@@ -263,6 +263,7 @@ class SelfAttention(nn.Module):
         assert dim_head or (dim % heads) == 0, 'embedding dimension must be divisible by number of heads'
         d_heads = default(dim_head, dim // heads)
 
+        # heads
         self.heads = heads
         self.d_heads = d_heads
         self.receives_context = receives_context
@@ -273,14 +274,19 @@ class SelfAttention(nn.Module):
         self.local_attn_heads = n_local_attn_heads
         self.local_attn  = LocalAttention(local_attn_window_size, causal = causal, dropout = attn_dropout)
 
+        # dim is the input direction, d_heads is the dimension of heads
+        # heads is the number of heads
         self.to_q = nn.Linear(dim, d_heads * heads, bias = False)
 
         kv_heads = heads
 
         self.kv_heads = kv_heads
+        # heads of k
         self.to_k = nn.Linear(dim, d_heads * kv_heads, bias = False)
+        # heads of v
         self.to_v = nn.Linear(dim, d_heads * kv_heads, bias = False)
 
+        # (d_heads*heads, dim)
         self.to_out = nn.Linear(d_heads * heads, dim)
         self.dropout = nn.Dropout(dropout)
 
@@ -288,6 +294,7 @@ class SelfAttention(nn.Module):
         assert not (self.receives_context and not exists(context)), 'context must be supplied if self attention is in receives context mode'
 
         if not self.receives_context:
+        # <query, key, value>
             q, k, v = (self.to_q(x), self.to_k(x), self.to_v(x))
         else:
             q, k, v = (self.to_q(x), self.to_k(context), self.to_v(context))
@@ -437,6 +444,8 @@ class LinearAttentionTransformer(nn.Module):
     def forward(self, x, **kwargs):
         return self.layers(x, **kwargs)
 
+# LinearAttentionTransformerLM
+# network
 class LinearAttentionTransformerLM(nn.Module):
     def __init__(
         self,
@@ -473,6 +482,7 @@ class LinearAttentionTransformerLM(nn.Module):
     ):
         assert n_local_attn_heads == 0 or (max_seq_len % local_attn_window_size) == 0, 'max sequence length must be divisible by the local attention window size'
         super().__init__()
+        # embedding dimension
         emb_dim = default(emb_dim, dim)
         self.max_seq_len = max_seq_len
 
@@ -496,11 +506,18 @@ class LinearAttentionTransformerLM(nn.Module):
         self.norm = nn.LayerNorm(emb_dim)
         # self.out = nn.Linear(emb_dim, num_tokens) if not return_embeddings else nn.Identity()
 
+        # there are some encodings to use (represent the metric with the encodings)
         self.metric_enc = nn.Linear(1, emb_dim, device=device, dtype=dtype)
-        self.place_enc = nn.Embedding(2282, emb_dim//2, device=device, dtype=dtype)
+        # the embedding module contains 3002 tensors of emb_dim//2, why emb_dim // 2 (3002 positions) 
+        # represent these 3002 positions ussing emb_dim//2 dimension
+        # different cases : different embeddings (stable, because the BRAM/DSP sites on the FPGA board is stable)
+        # whether this is stable
+        self.dsp_place_enc = nn.Embedding(2281, emb_dim//2, device=device, dtype=dtype)
+        self.bram_place_enc = nn.Embedding(721, emb_dim//2, device=device, dtype=dtype) 
+        # the continuous region constraints (linear layer)
         self.region_enc = nn.Linear(4, emb_dim//4, device=device, dtype=dtype)
-
-        self.get_place_ = nn.Linear(emb_dim//2, 2282, device=device, dtype=dtype)
+        # get the place for each macros
+        self.get_place_ = nn.Linear(emb_dim//2, 3002, device=device, dtype=dtype)
 
         with torch.no_grad():
             self.get_place_.weight.zero_()
@@ -558,6 +575,7 @@ def timestep_embedding(timesteps, dim, max_period=10000):
     :param dim: the dimension of the output.
     :param max_period: controls the minimum frequency of the embeddings.
     :return: an [N x dim] Tensor of positional embeddings.
+    positional embedding
     """
     half = dim // 2
     freqs = torch.exp(

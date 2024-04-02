@@ -9,6 +9,7 @@ import torch.distributed as dist
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
 from torch.optim import AdamW
 import io
+import pdb
 
 from diffuseq.utils import dist_util, logger
 from diffuseq.utils.fp16_util import (
@@ -58,7 +59,7 @@ class TrainLoop:
         self.data = data
         self.eval_data = eval_data
         self.batch_size = batch_size
-        self.microbatch = microbatch if microbatch > 0 else batch_size
+        self.microbatch = microbatch if microbatch > 0 else batch_size # batch size
         self.lr = lr
         self.ema_rate = (
             [ema_rate]
@@ -179,16 +180,22 @@ class TrainLoop:
         while (
             not self.learning_steps
             or self.step + self.resume_step < self.learning_steps
-        ):  
+        ): 
+            # one batch of the data
+            # batch : embeddings for the data, all the other information
             batch, cond = next(self.data)
             self.run_step(batch, cond)
+            # dump the logger information
+
             if self.step % self.log_interval == 0:
                 logger.dumpkvs()
+            # evaluate the trained model on the validation data
             if self.eval_data is not None and self.step % self.eval_interval == 0:
                 batch_eval, cond_eval = next(self.eval_data)
                 self.forward_only(batch_eval, cond_eval)
                 print('eval on validation set')
                 logger.dumpkvs()
+            # save the model
             if self.step > 0 and self.step % self.save_interval == 0:
                 self.save()
                 # Run for a finite amount of time in integration tests.
@@ -200,7 +207,9 @@ class TrainLoop:
             self.save()
 
     def run_step(self, batch, cond):
+        # calculate the loss and return the gradients
         self.forward_backward(batch, cond)
+        # optimize the model 
         if self.use_fp16:
             self.optimize_fp16()
         else:
@@ -220,7 +229,10 @@ class TrainLoop:
                 }
                 last_batch = (i + self.microbatch) >= batch.shape[0]
                 # t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+                # what is the shape of the micro.shape[0]
                 t, weights = self.schedule_sampler.sample(micro.shape[0], self.device)
+                # functools module : higher order functions 
+                # partital objects: freeze some of the parameters
                 compute_losses = functools.partial(
                     self.diffusion.training_losses,
                     self.ddp_model,
@@ -241,17 +253,25 @@ class TrainLoop:
 
 
     def forward_backward(self, batch, cond):
+        # batch is the embeddings; cond is the out_kwargs
         zero_grad(self.model_params)
+
         for i in range(0, batch.shape[0], self.microbatch):
+            # smaller batch size (embedding)
             micro = batch[i : i + self.microbatch].to(self.device)
+            # smaller batch size (out_kwargs)            
             micro_cond = {
                 # k: v[i : i + self.microbatch].to(dist_util.dev())
                 k: v[i : i + self.microbatch].to(self.device)
                 for k, v in cond.items()
             }
             last_batch = (i + self.microbatch) >= batch.shape[0]
+
             # t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+            # Why the sampler is proposed?
             t, weights = self.schedule_sampler.sample(micro.shape[0], self.device)
+
+            # calculate the losses
             compute_losses = functools.partial(
                 self.diffusion.training_losses,
                 self.ddp_model,
@@ -266,15 +286,19 @@ class TrainLoop:
                 with self.ddp_model.no_sync():
                     losses = compute_losses()
 
+            # sampler update and multiply the loss sequence
             if isinstance(self.schedule_sampler, LossAwareSampler):
                 self.schedule_sampler.update_with_local_losses(
                     t, losses["loss"].detach()
                 )
 
             loss = (losses["loss"] * weights).mean()
+
             log_loss_dict(
                 self.diffusion, t, {k: v * weights for k, v in losses.items()}
             )
+
+            # calculate the gradients
             if self.use_fp16:
                 loss_scale = 2 ** self.lg_loss_scale
                 (loss * loss_scale).backward()

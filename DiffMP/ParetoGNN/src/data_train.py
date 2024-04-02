@@ -4,6 +4,7 @@ import dgl
 import copy
 
 
+## a little bit strange (why the length of the dataset is 10000000, and the number of edges)
 class Graph_Dataset(torch.utils.data.Dataset):
     def __init__(self, g):
         self.len = g.number_of_edges()
@@ -14,6 +15,8 @@ class Graph_Dataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         return self.len
 
+
+# collator : collect and combine
 class Universal_Collator(object):
     def __init__(self, g, use_saint, batch_size, device, tasks,
                 minsg_edge_drop_ratio, minsg_feat_drop_ratio, minsg_batch_size_multiplier, minsg_k_hop, \
@@ -32,7 +35,10 @@ class Universal_Collator(object):
 
         if 'p_link' in tasks:
             # link
+            # sampler that builds builds computational dependency of node representations via neighbor sampling 
+            # for multilayer GNN. Three Layer GNN (the nodes for sampling for each layer)
             sampler = dgl.dataloading.MultiLayerNeighborSampler([15, 10, 5])
+            # create the edge-wise sampler from a node-wise sampler (negative sampler)
             self.link_sampler = dgl.dataloading.as_edge_prediction_sampler(
                             sampler, negative_sampler=dgl.dataloading.negative_sampler.GlobalUniform(link_negative_ratio))
 
@@ -63,6 +69,7 @@ class Universal_Collator(object):
                                 dgl.transforms.DropNode(gm_node_drop_ratio), \
                             dgl.transforms.FeatMask(gm_feat_drop_ratio, ['feat'])]
         
+        # feature decoding task
         if 'p_decor' in tasks:
             self.decor_size = decor_size
             self.der = der

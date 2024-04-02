@@ -42,6 +42,7 @@ def main():
     # load configurations.
     config_path = os.path.join(os.path.split(args.model_path)[0], "training_args.json")
     print(config_path)
+    
     # sys.setdefaultencoding('utf-8')
     with open(config_path, 'rb', ) as f:
         training_args = json.load(f)
@@ -49,6 +50,7 @@ def main():
     args.__dict__.update(training_args)
 
     logger.log("### Creating model and diffusion...")
+    # model refers to the linear transformer model; diffusion refers to the diffusion model
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, load_defaults_config().keys())
     )
@@ -93,6 +95,7 @@ def main():
     all_test_data = []
 
     try:
+    # data_valid
         while True:
             batch, cond = next(data_valid)
             all_test_data.append(cond)
@@ -197,7 +200,6 @@ def main():
                 dicts = json.load(f)
                 dict_DSP = dicts[0]
                 dict_BRAM = dicts[1]
-                dict_URAM = dicts[2]
 
             dict_DSP_trans = dict([val, key] for key, val in dict_DSP.items())
             unduplicate_res = [dict_DSP_trans[str(i)] for i in unduplicate_res]
