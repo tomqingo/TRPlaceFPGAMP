@@ -8,6 +8,8 @@ import os
 from random import choice
 from torch.utils.data import Dataset
 import pdb
+import queue
+from queue import PriorityQueue
 
 
 class Dataset:
@@ -93,8 +95,8 @@ class Dataset:
         self.grid_col_width = []  # the number of the grid column width
         self.gridcolid2colid = {} # the grid column id to the column id
         self.colid2gridcolid = {} # the column id to the grid column
+        self.gridcolnumsites = [] # the number of the sites in the grid columns
 
-    
     # Read the design.nodes file
     def readNodes(self):
         with open(self.params["nodes"], "r") as f_node:
@@ -181,6 +183,13 @@ class Dataset:
             if len(net.cascademacropins) >= 1 and (len(net.cascademacropins) + len(net.IOpins)) > 1:
                 self.placementnets.append(net)
                 self.netid2placementnetid[net.id] = len(self.placementnets) - 1
+        
+        # Append the placementnet id into the set of connected nets of macros
+        for placementnet in self.placementnets:
+            for cascadeid in placementnet.cascademacropins:
+                self.macros[cascadeid].connectedPlacementNets.append(placementnet.id)
+                self.macros[cascadeid].degree += (len(placementnet.cascademacropins) - 1)
+                self.macros[cascadeid].degree_IO += (len(placementnet.IOpins))
     
     # Read the design.lib file                     
     def readCellLibs(self):
@@ -262,6 +271,7 @@ class Dataset:
                     self.sitemap_height = int(cur_line_col[2])
                     self.sitemaps = np.ones([self.sitemap_width, self.sitemap_height])*(-1) #2d site maps with the 1d site value, -1 refers to the sites that could not be placed
                     self.sitemap_res = np.ones([self.sitemap_width, self.sitemap_height])*(-1) #2d site maps with the site category, -1 refers to the sites that could not be placed
+                    col_sitecnt = -1
                     while cur_line_id < len(all_lines):
                         cur_line = all_lines[cur_line_id]
                         if "URAM" in cur_line:
@@ -286,19 +296,21 @@ class Dataset:
                             self.num_resource_supply[res_name] += self.sitetypes[sitetype_id].resource[res_name] 
                             self.num_bel += 1
                         cur_line_id += 1
+                        # number of the sites in the dictionary
                         self.num_site_dict[cur_line_col[2]] += 1
 
                         # record the position and the width of BRAM and DSP columns
                         if "BRAM" in cur_line or ("DSP" in cur_line or "IO" in cur_line):
                             self.colid2gridcolid[int(cur_line_col[0])] = len(self.colid2gridcolid) - 1
                             self.gridcolid2colid[len(self.colid2gridcolid) - 1] = int(cur_line_col[0])
+                            col_sitecnt += 1
                             # BRAM and DSP
                             if "BRAM" in cur_line:
                                 if (len(self.colid2gridcolid) - 1) not in self.BRAMgridcols:
                                     self.BRAMgridcols.append(len(self.colid2gridcolid) - 1)
                                 if int(cur_line_col[1]) not in self.BRAMgridrows:
                                     self.BRAMgridrows.append(int(cur_line_col[1]))
-                            
+                                
                             if "DSP" in cur_line:
                                 if (len(self.colid2gridcolid) - 1) not in self.DSPgridcols:
                                     self.DSPgridcols.append(len(self.colid2gridcolid) - 1)
@@ -309,11 +321,14 @@ class Dataset:
                                 column_width = int(cur_line_col[0]) - prev_id
                                 prev_id = int(cur_line_col[0])
                                 self.grid_col_width.append(column_width)
+                                self.gridcolnumsites.append(col_sitecnt)
+                                col_sitecnt = 0
                             elif prev_id == -1:
                                 prev_id = int(cur_line_col[0])
                     
                     # (33, 200)
                     self.grid_col_width.append(1)
+                    self.gridcolnumsites.append(col_sitecnt + 1)
                     self.grid_width = len(self.gridcolid2colid)
                     self.grid_height = self.sitemap_height
 
@@ -693,6 +708,100 @@ class Dataset:
             totalMacroHPWL += macroHPWL
         return totalMacroHPWL
 
+    def ObtainBFSOrder(self, cascademacrocol):
+        # nodeid array
+        nodeidarr = []
+        # Find the node orders with the DFS sequence
+        q = queue.Queue()
+        # Put all the cascaded macros in the queue
+        # According to the IO connections
+        visited = [False for id in range(len(self.macros))]
+        # Add the cascade macros information
+        for cascadeinfo in cascademacrocol:
+            nodeidarr.append(cascadeinfo[0])
+            q.put(cascadeinfo[0])
+            visited[cascadeinfo[0]] = True
+
+        # visited the cascade macros and the connected macros
+        while not q.empty():
+            elemid = q.get()
+            # find the elements and the adjacenet nodes
+            macro = self.macros[elemid]
+            for netid in macro.connectedPlacementNets:
+                placementnetid = self.netid2placementnetid[netid]
+                for cascadeid in self.placementnets[placementnetid].cascademacropins:
+                    if not visited[cascadeid]:
+                        nodeidarr.append(cascadeid)
+                        q.put(cascadeid)
+                        visited[cascadeid] = True
+
+        # visited the other macros and its connected macros
+        for macroid in range(len(visited)):
+            if not visited[macroid]:
+                nodeidarr.append(macroid)
+                q.put(macroid)
+                visited[macroid] = True
+            while not q.empty():
+                elemid = q.get()
+                macro = self.macros[elemid]
+                for netid in macro.connectedPlacementNets:
+                    placementnetid = self.netid2placementnetid[netid]
+                    for cascadeid in self.placementnets[placementnetid].cascademacropins:
+                        if not visited[cascadeid]:
+                            nodeidarr.append(cascadeid)
+                            q.put(cascadeid)
+                            visited[cascadeid] = True
+        return nodeidarr
+
+    def ObtainBFSDEGREEOrder(self, cascademacrocol):
+        # nodeid array
+        nodeidarr = []
+        # Find the node orders with the DFS sequence
+        q = queue.Queue()
+
+        pq = PriorityQueue()
+        
+        # Put all the cascaded macros in the queue
+        # According to the (size, degree_IO, degree)
+        visited = [False for id in range(len(self.macros))]
+        # Add the cascade macros information
+        for cascadeinfo in cascademacrocol:
+            q.put(cascadeinfo[0])
+            visited[cascadeinfo[0]] = True
+
+        # visited the cascade macros and the connected macros
+        while not q.empty():
+            elemid = q.get()
+            nodeidarr.append(elemid)
+            # find the elements and the adjacenet nodes
+            macro = self.macros[elemid]
+            for netid in macro.connectedPlacementNets:
+                placementnetid = self.netid2placementnetid[netid]
+                for cascadeid in self.placementnets[placementnetid].cascademacropins:
+                    macro_degree = self.macros[cascadeid].degree
+                    if not visited[cascadeid]:
+                        pq.put((-macro_degree, cascadeid))
+                        visited[cascadeid] = True
+
+        # visited the other macros and its connected macros
+        for macroid in range(len(visited)):
+            if not visited[macroid]:
+                macro_degree = self.macros[macroid].degree
+                pq.put((-macro_degree, macroid))
+                visited[macroid] = True
+            while not pq.empty():
+                elemid = pq.get()
+                nodeidarr.append(elemid[1])
+                macro = self.macros[elemid[1]]
+                for netid in macro.connectedPlacementNets:
+                    placementnetid = self.netid2placementnetid[netid]
+                    for cascadeid in self.placementnets[placementnetid].cascademacropins:
+                        macro_degree = self.macros[cascadeid].degree
+                        if not visited[cascadeid]:
+                            pq.put((-macro_degree, cascadeid))
+                            visited[cascadeid] = True
+        return nodeidarr
+        
     # output the macro placement results
     def OutputSolutionpl(self, output_path):
         with open(output_path, "w") as f_sol:
@@ -709,7 +818,7 @@ class Dataset:
             f_sol.write(output_str)
 
     # read all the files in testcase
-    def readAll(self, logger):
+    def readAll(self, args, logger):
         logger.info("loading cell library")
         self.readCellLibs()
         logger.info("Number of cells in the library:"+str(len(self.cellLib)))
@@ -744,7 +853,29 @@ class Dataset:
         self.num_macro = len(self.macros)
         self.num_basic_macro = self.num_macro - self.num_cascade_macro
 
-        self.nodeidlist = list(range(self.num_macro))
+        # define the order of the macros
+        # construct the tuple of (macro size, degree) 
+        # self.nodeidlist = list(range(self.num_macro))
+        nodeidarr = []
+        for macro in self.macros:
+            nodeinfo = (macro.id, macro.height, macro.degree_IO, macro.degree)
+            nodeidarr.append(nodeinfo)
+            # sort the nodeid list
+        nodeidarr.sort(key = lambda x: (-x[1], -x[2], -x[3]))
+        cascadeidarr = nodeidarr[0: len(self.cascademacros)]
+        # pdb.set_trace()
+        if args.ordermethod == "sizedegree":
+            self.nodeidlist = []
+            for nodeinfo in nodeidarr:
+                self.nodeidlist.append(nodeinfo[0])
+        elif args.ordermethod == "bfs":
+            self.nodeidlist = self.ObtainBFSOrder(cascadeidarr)
+        elif args.ordermethod == "bfsdegree":
+            self.nodeidlist = self.ObtainBFSDEGREEOrder(cascadeidarr)
+        else:
+            self.nodeidlist = list(range(0, len(self.macros)))
+        # pdb.set_trace()
+        # pdb.set_trace()
 
         for id in range(len(self.nodes)):
             nodeper = self.nodes[id]
@@ -811,7 +942,7 @@ def load_dataset(args, logger, placement=None):
     dataset = Dataset(params)
     if checkparam(params, logger):
         logger.info("loading from original benchmark...")
-        dataset.readAll(logger)
+        dataset.readAll(args, logger)
     
     if args.feature_extract:
         logger.info("=======Initial feature construction=======")

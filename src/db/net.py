@@ -23,6 +23,9 @@ class Net:
 
     def addMacroPin(self, nodeid):
         self.macropins.append(nodeid)
+    
+    def addCascadeMacroPin(self, cascadeid):
+        self.cascademacropins.appennd(cascade_id)
 
     def addIOPin(self, nodeid):
         self.IOpins.append(nodeid)

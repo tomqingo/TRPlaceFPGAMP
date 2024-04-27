@@ -63,13 +63,18 @@ class Actor(nn.Module):
         self.grid_width = grid_width
         self.grid_height = grid_height
 
-    def forward(self, x, soft_coefficient, graph = None, cnn_res = None, gcn_res = None, graph_node = None):
+    def forward(self, x, soft_coefficient, column_ids, graph = None, cnn_res = None, gcn_res = None, graph_node = None):
         # cnn resource
         if not cnn_res:
             # (batch, 1+grid*grid*1) (net_img, mask, net_img_2, mask_2)
             cnn_input = x[:, 1+self.grid_width*self.grid_height*1: 1+self.grid_width*self.grid_height*5].reshape(-1, 4, self.grid_width, self.grid_height)
             # mask of the canvas (It is easily to be incorporated with the coarse_input)
             mask = x[:, 1+self.grid_width*self.grid_height*2: 1+self.grid_width*self.grid_height*3].reshape(-1, self.grid_width, self.grid_height)
+
+            # modify the mask according to column ids
+            for id in range(self.grid_width):
+                if id not in column_ids:
+                    mask[:, id, :] = 1
             
             # mask distance
             mask = mask.flatten(start_dim=1, end_dim=2)
@@ -105,6 +110,81 @@ class Actor(nn.Module):
 
         return x, cnn_res, gcn_res
 
+# One dimension
+class ActorCol(nn.Module):
+    def __init__(self, grid_col):
+        # (33,1)
+        super(ActorCol, self).__init__()
+        self.grid_col = grid_col
+        self.hidden_emb = 100
+
+        # utilization head
+        self.utilization_extractor = nn.Sequential(
+            nn.Linear(self.grid_col, int(self.hidden_emb / 2)),
+            nn.ReLU(),
+            nn.Linear(int(self.hidden_emb / 2), int(self.hidden_emb / 2)),
+            nn.ReLU()
+        )
+
+        # coarse head
+        self.coarse_extractor = nn.Sequential(
+            nn.Linear(self.grid_col*3, int(self.hidden_emb / 2)),
+            nn.ReLU(),
+            nn.Linear(int(self.hidden_emb / 2), int(self.hidden_emb / 2)),
+            nn.ReLU()
+        )
+
+        # merge head
+        self.merge_extractor = nn.Sequential(
+            nn.Linear(self.hidden_emb, self.hidden_emb),
+            nn.ReLU(),
+            nn.Linear(self.hidden_emb, self.grid_col),
+            nn.ReLU()
+        )
+
+        self.softmax = nn.Softmax(dim=-1)
+
+    def forward(self, x, soft_coefficient):
+        # (cell_id, utilization, wire_mask_1, mask_1, wire_mask_2, mask_2, cell_width, cell_height)
+        # pdb.set_trace()
+        mask = x[:, 1+self.grid_col*2 : 1+self.grid_col*3]
+
+        # utilization mask
+        utilization_mask = x [:, 1:1+self.grid_col]
+
+        # utilization resource
+        utilization_res = self.utilization_extractor(utilization_mask)
+
+        # wire_mask_1 and wire_mask_2
+        # (curr_view, wire_mask_1, wire_mask_2)
+        coarse_input = torch.cat((x[:, 1:1+self.grid_col*2], x[:, 1+self.grid_col*3:1+self.grid_col*4]), axis=1)
+        coarse_res = self.coarse_extractor(coarse_input)
+
+        res = self.merge_extractor(torch.cat([utilization_res, coarse_res], axis=1))
+
+        # wire_mask_1
+        net_img = x[:, 1+self.grid_col: 1+self.grid_col*2]
+        # wire_mask_1 + large_value * mask
+        net_img = net_img + x[:, 1+self.grid_col*2: 1+self.grid_col*3]*10
+
+        # soft coefficient
+        # the increasement of the HPWL is restricted to min_net_img + 1
+        net_img_min = net_img.min() + soft_coefficient
+
+        # the minimum resource
+        mask2 = net_img.le(net_img_min).logical_not().float()
+
+        x = res
+
+        x = torch.where(mask + mask2 >= 1.0, -1.0e10, x.double())
+
+        x = self.softmax(x)
+
+        return x, utilization_res
+
+# class ActorColnew(nn.Module):
+#     def __init__ (self, grid_col):
+
 
 class Critic(nn.Module):
     def __init__(self, cnn, gcn, cnn_coarse, res_net):
@@ -122,3 +202,18 @@ class Critic(nn.Module):
         x2 = F.relu(self.fc2(x1))
         value = self.state_value(x2)
         return value
+
+class CriticCol(nn.Module):
+    def __init__(self):
+        super(CriticCol, self).__init__()
+        self.fc1 = nn.Linear(64, 64)
+        self.fc2 = nn.Linear(64, 64)
+        self.state_value = nn.Linear(64, 1)
+        self.pos_emb = nn.Embedding(9900, 64)
+    
+    def forward(self, x):
+        x1 = F.relu(self.fc1(self.pos_emb(x[:, 0].long())))
+        x2 = F.relu(self.fc2(x1))
+        value = self.state_value(x2)
+        return value
+    

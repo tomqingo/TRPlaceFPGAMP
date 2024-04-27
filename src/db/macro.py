@@ -43,6 +43,11 @@ class CascadeMacro:
         self.locY = -1
         self.realX = -1
         self.realY = -1
+
+        # Degree of the cascademacros
+        self.degree = 0  # total number of connections
+        self.degree_IO  = 0  # total number of IO connections
+        self.connectedPlacementNets = []
     
     def addNode(self, node, is_macro):
         if is_macro:

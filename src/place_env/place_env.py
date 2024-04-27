@@ -11,6 +11,264 @@ import pdb
 import math
 
 
+class PlaceColEnv(gym.Env):
+    
+    def __init__(self, database, grid_col, grid_col_capacity, placed_num_macro=None):
+        print("grid_col", grid_col)
+        print("grid_capacity", grid_col_capacity)
+
+        assert sum(grid_col_capacity) >= database.num_macro
+
+        # the number of the cols in the grid graph
+        self.grid_col = grid_col
+        self.sitemap_height = database.sitemap_height
+        self.sitemap_width = database.sitemap_width
+
+        # grid capacity
+        self.grid_col_capacity = grid_col_capacity
+        self.database = database
+
+        self.num_macro = database.num_macro
+        self.num_net = database.num_placementnets
+        self.nodeidlist = database.nodeidlist
+
+        self.action_space = spaces.Discrete(self.grid_col)
+
+        self.state = None
+
+        self.net_min_max_ord ={}
+        self.node_pos = {}
+        self.net_placed_set = {}
+        self.last_reward = 0
+        self.num_macro_placed = 0
+
+        self.placed_num_macro = placed_num_macro
+    
+
+    def reset(self):
+        self.num_macro_placed = 0
+        num_macro = self.num_macro
+        # Use the one dimensional array to place all the cells
+        arr = np.zeros(self.grid_col)
+        arr_prop = np.zeros(self.grid_col)
+
+        for port in self.database.ports:
+            gridlocX = self.database.colid2gridcolid[port.locX]
+            arr_prop[gridlocX] = 1
+        
+        self.node_pos = {}
+        self.net_min_max_ord = {}
+
+        self.net_fea = np.zeros((self.database.num_placementnets, 4))
+        self.net_fea[:, 0] = 0
+        self.net_fea[:, 1] = 1.0
+
+        for port in self.database.ports:
+            for netId in port.netIds:
+                pin_x = port.locX
+                pin_grid_x = self.database.colid2gridcolid[pin_x]
+                arr[pin_grid_x] += 1
+                # pin_grid_x = 1
+                if netId in self.database.netid2placementnetid.keys():
+                    placementnetid = self.database.netid2placementnetid[netId]
+                    if placementnetid in self.net_min_max_ord:
+                        if pin_x > self.net_min_max_ord[placementnetid]['max_x']:
+                            self.net_min_max_ord[placementnetid]['max_x'] = pin_x
+                            self.net_fea[placementnetid]['max_x'] = pin_x * 1.0 / self.sitemap_width
+                        elif pin_x < self.net_min_max_ord[placementnetid]['min_x']:
+                            self.net_min_max_ord[placementnetid]['min_x'] = pin_x
+                            self.net_fea[placementnetid]['min_x'] = pin_x * 1.0 / self.sitemap_width
+                    else:
+                        self.net_min_max_ord[placementnetid] = {}
+                        self.net_min_max_ord[placementnetid]['max_x'] = pin_x
+                        self.net_min_max_ord[placementnetid]['min_x'] = pin_x
+
+                        self.net_fea[placementnetid][1] = pin_x * 1.0 / self.sitemap_width
+                        self.net_fea[placementnetid][0] = pin_x * 1.0 / self.sitemap_width
+        
+        self.net_placed_set = {}
+        net_img = np.zeros(self.grid_col)
+        net_img_2 = np.zeros(self.grid_col)
+
+        next_y = math.ceil(max(1, self.database.macros[self.nodeidlist[self.num_macro_placed]].num_cells))
+        macrotype = self.database.macros[self.nodeidlist[self.num_macro_placed]].macrotype
+        mask = self.get_mask(arr, next_y, macrotype)
+
+        # calculate the number of sites in one column
+        numsitescol = self.sitemap_height
+        if "BRAM" in macrotype or "RAMB" in macrotype:
+            numsitescol = int(self.sitemap_height / 5)
+        elif "DSP" in macrotype:
+            numsitescol = int(self.sitemap_height / 2.5)
+
+        next_y_2 = math.ceil(max(1, self.database.macros[self.nodeidlist[self.num_macro_placed + 1]].num_cells))
+        macrotype_2 = self.database.macros[self.nodeidlist[self.num_macro_placed + 1]].macrotype
+        mask_2 = self.get_mask(arr, next_y_2, macrotype_2)
+
+        for net in self.database.placementnets:
+            self.net_placed_set[net.id] = set()
+        
+        self.state = np.concatenate((np.array([self.num_macro_placed]), arr_prop, net_img, mask, net_img_2, 
+            mask_2, np.array([next_y / numsitescol])), axis = 0)
+        
+        return self.state
+
+    def get_net_img(self, is_next_next = False):
+
+        net_img = np.zeros(self.grid_col)
+
+        if not is_next_next:
+            next_macro_id = self.nodeidlist[self.num_macro_placed]
+        elif self.num_macro_placed + 1 < len(self.nodeidlist):
+            next_macro_id = self.nodeidlist[self.num_macro_placed + 1]
+        else:
+            return net_img
+        
+        macro = self.database.macros[next_macro_id]
+
+        for node in macro.Macronodecol:
+            for netid in node.netIds:
+                if netid not in self.database.netid2placementnetid.keys():
+                    continue
+                placementnetid = self.database.netid2placementnetid[netid]
+                if placementnetid in self.net_min_max_ord:
+                    start_x = self.net_min_max_ord[placementnetid]['min_x']
+                    start_x_grid = self.database.colid2gridcolid[start_x]
+
+                    end_x = self.net_min_max_ord[placementnetid]['max_x']
+                    end_x_grid = self.database.colid2gridcolid[end_x]
+                    weight = 1.0
+
+                    for i in range(0, start_x_grid):
+                        real_x = self.database.gridcolid2colid[i]
+                        net_img[i] += (start_x - real_x)*weight
+                    
+                    for i in range(end_x_grid+1, self.grid_col):
+                        real_x = self.database.gridcolid2colid[i]
+                        net_img[i] += (real_x - end_x)*weight
+        
+        return net_img
+    
+    def step(self, action):
+        arr_prop = self.state[1:1+self.grid_col]
+        arr = arr_prop * self.grid_col_capacity
+
+        mask = self.state[1+self.grid_col*2:1+self.grid_col*3]
+        reward = 0
+
+        # actions
+        if mask[action] == 1:
+            reward += (-200000)
+        
+        # cascade id
+        cascade_id = self.nodeidlist[self.num_macro_placed]
+        macro = self.database.macros[cascade_id]
+
+        size_x = 1
+        size_y = macro.num_cells
+
+        arr[action] += size_y
+        arr_prop[action] = arr[action] / self.grid_col_capacity[action]
+
+        self.node_pos[cascade_id] = action
+
+        # the connected nets
+        net_col = []
+        for node in macro.Macronodecol:
+            for netid in node.netIds:
+                if netid not in self.net_placed_set:
+                    continue
+                if netid not in net_col:
+                    net_col.append(netid)
+                self.net_placed_set[netid].add(node.id)
+                placementnetid = self.database.netid2placementnetid[netid]
+                pin_x = action
+                pin_x_real = self.database.gridcolid2colid[pin_x]
+
+                if placementnetid in self.net_min_max_ord:
+                    start_x = self.net_min_max_ord[placementnetid]['min_x']
+                    end_x = self.net_min_max_ord[placementnetid]['max_x']
+                    weight = 1.0
+
+                    if pin_x_real > self.net_min_max_ord[placementnetid]['max_x']:
+                        reward += weight * (self.net_min_max_ord[placementnetid]['max_x'] - pin_x_real)
+                        self.net_min_max_ord[placementnetid]['max_x'] = pin_x_real
+                        self.net_fea[placementnetid][1] = pin_x_real / self.sitemap_width
+                    elif pin_x_real < self.net_min_max_ord[placementnetid]['min_x']:
+                        reward += weight * (pin_x_real - self.net_min_max_ord[placementnetid]['min_x'])
+                        self.net_min_max_ord[placementnetid]['min_x'] = pin_x_real
+                        self.net_fea[placementnetid][0] = pin_x_real / self.sitemap_width
+                    
+                else:
+                    self.net_min_max_ord[placementnetid] = {}
+                    self.net_min_max_ord[placementnetid]['max_x'] = pin_x_real
+                    self.net_min_max_ord[placementnetid]['min_x'] = pin_x_real
+                    self.net_fea[placementnetid][1] = pin_x_real / self.sitemap_width
+                    self.net_fea[placementnetid][0] = pin_x_real / self.sitemap_width
+
+                    reward += 0
+        
+        self.num_macro_placed += 1
+        net_img = np.zeros(self.grid_col)
+        net_img_2 = np.zeros(self.grid_col)
+
+        if self.num_macro_placed < self.placed_num_macro:
+            net_img = self.get_net_img()
+            net_img_2 = self.get_net_img(is_next_next=True)
+            if net_img.max() > 0 or net_img_2.max() > 0:
+                net_img /= (max(net_img.max(), net_img_2.max())*1.0)
+                net_img_2 /= (max(net_img.max(), net_img_2.max()*1.0))
+        
+        if self.num_macro_placed == self.num_macro or (self.placed_num_macro is not None and self.num_macro_placed == self.placed_num_macro):
+            done = True
+        else:
+            done = False
+        
+        mask = np.ones(self.grid_col)
+        mask_2 = np.ones(self.grid_col)
+        numsitescol = self.sitemap_height
+
+        if not done:
+            next_y = self.database.macros[self.nodeidlist[self.num_macro_placed]].num_cells
+            macrotype = self.database.macros[self.nodeidlist[self.num_macro_placed]].macrotype
+            if "BRAM" in macrotype or "RAMB" in macrotype:
+                numsitescol = int(self.sitemap_height / 5)
+            elif "DSP" in macrotype:
+                numsitescol = int(self.sitemap_height / 2.5)
+            mask = self.get_mask(arr, next_y, macrotype)
+            if self.num_macro_placed + 1 < self.placed_num_macro:
+                next_y_2 = self.database.macros[self.nodeidlist[self.num_macro_placed+1]].num_cells
+                macrotype_2 = self.database.macros[self.nodeidlist[self.num_macro_placed+1]].macrotype                
+                mask_2 = self.get_mask(arr, next_y_2, macrotype_2)
+        else:
+            next_y = 0
+
+        #print(arr.shape, net_img.shape, mask.shape, net_img_2.shape, mask_2.shape, np.array([next_y/numsitescol]).shape)
+        self.state = np.concatenate((np.array([self.num_macro_placed]), arr_prop, net_img,
+                                    mask, net_img_2, mask_2, np.array([next_y/numsitescol])), axis=0)
+        return self.state, reward, done, {"raw_reward": reward, "net_img":net_img, "mask":mask}
+    
+    def get_mask(self, arr, next_y, macrotype):
+        mask = np.zeros(self.grid_col)
+        uitlization_coeff = 1.0
+
+        # select the sites for placing BRAMs or DSPs
+        if "BRAM" in macrotype or "RAMB" in macrotype:
+            selectcol = self.database.BRAMgridcols
+            selectrow = self.database.BRAMgridrows
+        elif "DSP" in macrotype:
+            selectcol = self.database.DSPgridcols
+            selectrow = self.database.DSPgridrows
+
+        for colid in range(self.grid_col):
+            if colid not in selectcol:
+                mask[colid] = 1
+            if arr[colid] + next_y > uitlization_coeff * self.grid_col_capacity[colid]:
+                mask[colid] = 1
+
+        return mask
+
+
 class PlaceEnv(gym.Env):
 
     def __init__(self, database, grid_width, grid_height, placed_num_macro = None):
@@ -197,6 +455,7 @@ class PlaceEnv(gym.Env):
         canvas = self.state[1: 1+self.grid_width*self.grid_height].reshape(self.grid_width, self.grid_height)
         mask = self.state[1+self.grid_width*self.grid_height*2: 1+self.grid_width*self.grid_height*3].reshape(self.grid_width, self.grid_height)
         reward = 0
+        x_reward  = 0
 
         # actions (grid_col, grid_row)
         x = round(action // self.grid_height)
@@ -206,6 +465,7 @@ class PlaceEnv(gym.Env):
         # Awards
         if mask[x][y] == 1:
             reward += -200000
+            x_reward = -200000
         
         cascade_id = self.nodeidlist[self.num_macro_placed]
         macro = self.database.macros[cascade_id]
@@ -285,10 +545,12 @@ class PlaceEnv(gym.Env):
 
                     if pin_x_real > self.net_min_max_ord[placementnetid]['max_x']:
                         reward += weight * (self.net_min_max_ord[placementnetid]['max_x'] - pin_x_real)
+                        x_reward += weight * (self.net_min_max_ord[placementnetid]['max_x'] - pin_x_real)
                         self.net_min_max_ord[placementnetid]['max_x'] = pin_x_real
                         self.net_fea[placementnetid][1] = pin_x_real / self.sitemap_width
                     elif pin_x_real < self.net_min_max_ord[placementnetid]['min_x']:
                         reward += weight * (pin_x_real - self.net_min_max_ord[placementnetid]['min_x'])
+                        x_reward += weight * (pin_x_real - self.net_min_max_ord[placementnetid]['min_x'])
                         self.net_min_max_ord[placementnetid]['min_x'] = pin_x_real
                         self.net_fea[placementnetid][0] = pin_x_real / self.sitemap_width
                     if pin_y > self.net_min_max_ord[placementnetid]['max_y']:
@@ -310,6 +572,7 @@ class PlaceEnv(gym.Env):
                     self.net_fea[placementnetid][3] = pin_y / self.sitemap_height
                     self.net_fea[placementnetid][2] = pin_y / self.sitemap_height
                     reward += 0
+                    x_reward += 0
                     cnt_pdb += 1
             cnt += 1
 
@@ -353,7 +616,7 @@ class PlaceEnv(gym.Env):
         self.state = np.concatenate((np.array([self.num_macro_placed]), canvas.flatten(),
             net_img.flatten(), mask.flatten(), net_img_2.flatten(), mask_2.flatten(),
             np.array([next_x / self.sitemap_width, next_y/self.sitemap_height])), axis = 0)
-        return self.state, reward, done, {"raw_reward": reward, "net_img": net_img, "mask": mask}
+        return self.state, reward, done, {"raw_reward": reward, "net_img": net_img, "mask": mask, "x_reward": x_reward}
     
     # For different kinds of macros
     # get the mask of the placement

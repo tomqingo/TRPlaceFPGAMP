@@ -79,7 +79,7 @@ $ python3 main.py --dataset_root /data/ssd/qluo/benchmark/mlcad_v2 --dataset mlc
 ~~~
 If we want to train the online RL model on Design_2
 ~~~
-$  python3 main.py --is_training True --is_test False --epoch 30000 --design_name Design_2
+$  python3 main.py --is_training True --is_test False --epoch 3000 --design_name Design_2
 ~~~
 If we want to test the online RL model after training on Design_2
 ~~~

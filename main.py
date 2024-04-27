@@ -17,7 +17,7 @@ def get_option():
     parser.add_argument('--runs', type=int, default=1, help='The number of the threads used in the program.')
 
     parser.add_argument("--log_freq", type=int, default=100) 
-    parser.add_argument("--result_dir", type=str, default="result", help="log/model root directory") 
+    parser.add_argument("--result_dir", type=str, default="save_img", help="log/model root directory") 
     parser.add_argument("--exp_id", type=str, default="", help="experiment id") 
     parser.add_argument("--log_dir", type=str, default="", help="log directory") 
     parser.add_argument("--log_name", type=str, default="test.log", help="log file name") 
@@ -45,11 +45,14 @@ def get_option():
 
     # Training mode
     parser.add_argument("--is_training", type=str2bool, default=False, help="Whether we would initialize the training")
-    parser.add_argument(
-    '--gamma', type=float, default=0.95, metavar='G', help='discount factor (default: 0.9)')
+    parser.add_argument('--gamma', type=float, default=0.95, metavar='G', help='discount factor (default: 0.9)')
     parser.add_argument('--seed', type=int, default=42, metavar='N', help='random seed (default: 0)')
     parser.add_argument('--disable_tqdm', type=int, default=1)
+    # initial learning rate (If we adjust the learning rate)
     parser.add_argument('--lr', type=float, default=2.5e-3)
+    parser.add_argument('--collr', type=float, default=2.5e-3)
+    parser.add_argument('--ordermethod', type=str, default="sizedegree", help='choose the orderings for different macros')
+
     parser.add_argument(
         '--log-interval',
         type=int,
@@ -63,7 +66,12 @@ def get_option():
     parser.add_argument('--is_test',  type=str2bool, default=False)
     parser.add_argument('--save_fig', type=str2bool, default=False)
     parser.add_argument('--checkpoint_path', default=None)
-    parser.add_argument('--epochs', type=int, default=30000)
+    parser.add_argument('--checkpoint_path_col', default=None)
+    parser.add_argument('--epochs', type=int, default=1000)
+    parser.add_argument('--warm_up_epochs', type=int, default=400)
+    parser.add_argument('--colfirst', type=str2bool, default=True)
+    parser.add_argument('--traincol', type=str2bool, default=True)
+    parser.add_argument("--k_col", type=int, default=3)
 
     args = parser.parse_args()
 

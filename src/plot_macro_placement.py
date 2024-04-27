@@ -14,10 +14,10 @@ def draw_macro_placement_result(args, dataset_obj, logger):
     for siteType in dataset_obj.sitetypes:
         for resource in siteType.resource.keys():
             resourceToSiteType[resource] = siteType.name
-    node_span = {'DSP': 2, 'BRAM': 5, 'URAM': 15} # hard-coded, span in y-direction x,y, x,y+?
+    node_span = {'DSP': 2, 'BRAM': 5} # hard-coded, span in y-direction x,y, x,y+?
 
-    labels = ['NULL', 'DSP', 'BRAM', 'URAM'] # R-xxx: resource for xxx
-    res_to_idx = {'NULL':0, 'DSP': 1, 'BRAM': 2, 'URAM': 3}
+    labels = ['NULL', 'DSP', 'BRAM'] # R-xxx: resource for xxx
+    res_to_idx = {'NULL':0, 'DSP': 1, 'BRAM': 2}
     # Create a colormap for the integer values
     cmap = plt.cm.get_cmap('viridis', len(labels))
     logger.info("Drawing the macro placement result...")

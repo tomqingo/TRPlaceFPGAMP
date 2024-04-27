@@ -5,11 +5,15 @@ cnt=0
 thread=$1
 start_id=$2
 end_id=$3
+log_dir=$4
+spread_iter=$5
+repeated_times=$6
 for design in ${designs[@]:$start_id:$end_id}
 do
 	cnt=$(( cnt + 1))
 	echo $cnt/${#designs[@]} "Design_"$design
-	python ../main.py --dataset_root ../benchmarks/mlcad2023_v2 --design_name Design_$design --result_dir ../results --exp_id generate_feature --random_place True --augument False --feature_extract True --output_dir ../benchmarks/mlcad2023_v2 &
+	
+	python run.py d$design --flow all -s $spread_iter -l $log_dir &
 	if [ $cnt == $thread ]
 	then
 		wait
