@@ -1,4 +1,4 @@
-TRPlaceFPGA-MP: Two-stage Reinforcement Learning based FPGA Macro Placement Tool
+# TRPlaceFPGA-MP: Two-stage Reinforcement Learning based FPGA Macro Placement Tool
 
 # Intro
 
