@@ -1,4 +1,9 @@
-CUMPLE: FPGA Macro Placement Tool
+TRPlaceFPGA-MP: Two-stage Reinforcement Learning based FPGA Macro Placement Tool
+
+# Intro
+
+Reinforcement learning (RL) based macro placement is of great interest in the field of both artificial intelligence and electronic design automation (EDA), as it offers the excellent potential for better performance, power and area optimization compared with analytical methods. However, existing techniques are restricted in the ASIC and ignore the other hardware architectures like FPGA. Ignoring the intrinsic characters of FPGA structures, conventional RL-based methods for ASICs may lead to large exploration space and low sample efficiency. In this work, we propose TRPlaceFPGA-MP, a two-stage RL-based macro placement framework for Ultrascale FPGAs. Leveraging
+the columnar architecture, we first train a tiny RL model to determine the candidate columns for each macro in the first stage. With the pruned searching space, a more sophisticated is then trained to determine the ultimate positions in the second stage. TRPlaceFPGA-MP can boost the convergence rate by 2.28x and speed up the exploration by 1.61x, compared to the onestage approach, as demonstrated on the MLCAD2023 contest benchmark.
 
 # Input file format
 
@@ -19,7 +24,7 @@ solution.pl <br>
 
 1. Read the benchmark (Two modes: All designs in the benchmark or one design)
 
-2. Macro Placement (Implement the macro placement using the online Reinforce Learning)
+2. Macro Placement (Implement the macro placement using one-stage or two-stage online Reinforce Learning)
 
 3. Validate the legality of the placement result (The resource, coordinate, macro shape, and regional requirements)
 
@@ -42,9 +47,15 @@ options:
 --random_place  [optional]      str2bool If True, randomly place macros, or place them according to sample.pl.
 --is_training   [optional]      str2bool Whether we train/test a RL model for the macro placement
 --batch_size    [optional]      int      Online RL training batch size
---epochs        [optional]      int      The training iterations
+--epochs        [optional]      int      The number of epochs for training the model to place macros on gridmap (Stage-2)
 --lr            [optional]      float    Learning rate
 --is_test       [optional]      str2bool Whether we test the RL Model
+--checkpoint_path [optional]    str2bool The path to the model to place macros on gridmap (Stage-2)
+--checkpoint_path_col [optional] st2bool The path to the model to place macros on the columns (Stage-1)
+--coltrain_epochs [optional]     int     The number of the epochs to train place macros on the columns (Stage-1)
+--colfirst      [optional]      str2bool Whether to conduct the 1-st stage (determine the candidate columns)
+--traincol      [optional]      str2bool Whether to train the column determination models
+--k_col         [optional]       int     The number of the candidate columns
 ~~~
 
 # Directory in the repo
@@ -77,14 +88,23 @@ If we want to run all the cases in mlcad2023_v2 using randomly placement
 ~~~
 $ python3 main.py --dataset_root /data/ssd/qluo/benchmark/mlcad_v2 --dataset mlcad2023 --run_all True --random_place True
 ~~~
-If we want to train the online RL model on Design_2
+If we want to train the one-stage online RL model on Design_2
 ~~~
-$  python3 main.py --is_training True --is_test False --epoch 3000 --design_name Design_2
+$  python3 main.py --is_training True --is_test False --epoch 300 --colfirst False --traincol False --design_name Design_2
 ~~~
-If we want to test the online RL model after training on Design_2
+If we want to train the two-stage online RL model with 5 candidate columns on Design_2
 ~~~
-$ python3 main.py --is_training True --is_test True --epoch 1 --design_name Design_2 --checkpoint_path save_models/Design_2/net_dict-Design_2-2320-2024-04-01-03-53-38-2788503.pkl
+$  python3 main.py --is_training True --is_test False --epoch 300 --coltrain_epochs 200 --colfirst True --traincol False --k_col 5 --design_name Design_2
 ~~~
+If we want to test the one-stage online RL model after training on Design_2
+~~~
+$ python3 main.py --is_training True --is_test True --epoch 1 --colfirst False --traincol False --design_name Design_2 --checkpoint_path save_models/Design_2/net_dict-Design_2-2320-2024-04-01-03-53-38-2788503.pkl
+~~~
+If we want to test the two-stage online RL model after training on Design_2
+~~~
+$ python3 main.py --is_training True --is_test True --epoch 1 --colfirst True --traincol False --design_name Design_2 --checkpoint_path save_models/Design_2/net_dict-Design_2-2320-2024-04-01-03-53-38-2788503.pkl --checkpoint_path_col save_models/Design_2/net_dict_col-Design_2-2320-2024-04-01-03-53-38-2788503.pkl
+~~~
+
 
 ### Dependencies
 

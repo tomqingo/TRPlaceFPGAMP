@@ -69,8 +69,8 @@ def get_option():
     parser.add_argument('--checkpoint_path_col', default=None)
     parser.add_argument('--epochs', type=int, default=300)
     parser.add_argument('--coltrain_epochs', type=int, default=200)
-    parser.add_argument('--colfirst', type=str2bool, default=True)
-    parser.add_argument('--traincol', type=str2bool, default=True)
+    parser.add_argument('--colfirst', type=str2bool, default=False)
+    parser.add_argument('--traincol', type=str2bool, default=False)
     parser.add_argument("--k_col", type=int, default=5)
 
     args = parser.parse_args()
