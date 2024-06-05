@@ -187,7 +187,7 @@ class ActorCol(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, cnn, gcn, cnn_coarse, res_net):
+    def __init__(self, cnn, gcn, res_net):
         super(Critic, self).__init__()
         self.fc1 = nn.Linear(64, 64)
         self.fc2 = nn.Linear(64, 64)

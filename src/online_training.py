@@ -50,10 +50,12 @@ else:
 writer = SummaryWriter('./tb_log')
 
 
+# PPO epoch
 class PPO():
     clip_param = 0.2
     max_grad_norm = 0.5
     ppo_epoch = 10
+
 
     def __init__(self, args, grid_width, grid_height):
         super(PPO, self).__init__()
@@ -62,7 +64,7 @@ class PPO():
         self.cnn = MyCNN().to(device)
         self.cnn_coarse = MyCNNCoarse(self.resnet, device).to(device)
         self.actor_net = Actor(cnn = self.cnn, gcn = self.gcn, cnn_coarse = self.cnn_coarse, grid_width = grid_width, grid_height= grid_height).float().to(device)
-        self.critic_net = Critic(cnn = self.cnn, gcn = self.gcn, cnn_coarse = None, res_net=self.resnet).float().to(device)
+        self.critic_net = Critic(cnn = self.cnn, gcn = self.gcn, res_net=self.resnet).float().to(device)
         self.buffer = []
         self.counter = 0
         self.training_step = 0
@@ -77,13 +79,11 @@ class PPO():
         self.batch_size = args.batch_size
         self.benchmark = args.design_name
         self.exp_id = args.exp_id
-        # buffer capacity = 10 * placed_num_macro
-        if self.placed_num_macro:
-            self.buffer_capacity = 10 * (self.placed_num_macro)
-        else:
-            self.buffer_capacity = 5120
+        # buffer capacity
+        self.buffer_capacity = 10 * (self.placed_num_macro)
     
     def load_param(self, path):
+        # checkpoint
         checkpoint = torch.load(path, map_location=torch.device(device))
         self.actor_net.load_state_dict(checkpoint['actor_net_dict'])
         self.critic_net.load_state_dict(checkpoint['critic_net_dict'])
@@ -110,7 +110,7 @@ class PPO():
         # -13166 reward
         benchmark_save_model_path = os.path.join("save_models", self.benchmark, self.exp_id)
         if not os.path.exists(benchmark_save_model_path):
-            os.mkdir(benchmark_save_model_path)
+            os.makedirs(benchmark_save_model_path)
         
         torch.save({"actor_net_dict": self.actor_net.state_dict(),
                     "critic_net_dict": self.critic_net.state_dict()},
@@ -152,6 +152,7 @@ class PPO():
         target_list.reverse()
         target_v_all = torch.tensor(np.array([t for t in target_list]), dtype=torch.float).view(-1, 1).to(device)
        
+        # state checking
         for _ in range(self.ppo_epoch): # iteration ppo_epoch 
             for index in tqdm(BatchSampler(SubsetRandomSampler(range(self.buffer_capacity)), self.batch_size, True),
                 disable = self.disable_tqdm):
@@ -173,7 +174,6 @@ class PPO():
                 # actor loss < 0
                 L1 = ratio * advantage.squeeze() 
                 L2 = torch.clamp(ratio, 1-self.clip_param, 1+self.clip_param) * advantage.squeeze()
-                #pdb.set_trace()
                 action_loss = -torch.min(L1, L2).mean() # MAX->MIN desent
 
                 self.actor_optimizer.zero_grad()
@@ -207,14 +207,13 @@ class PPO_col():
         # grid columns
         self.actorcol_net = ActorCol(grid_col = grid_width).float().to(device)
         self.criticcol_net = CriticCol().float().to(device)
-        #pdb.set_trace()
         self.buffer = []
         self.counter = 0
         self.training_step = 0
         self.grid_width = grid_width
-        # ACTOR-CRITIC
+        # actor-critic
         self.actorcol_optimizer = optim.Adam(self.actorcol_net.parameters(), args.collr)
-        self.criticcol_net_optimizer = optim.Adam(self.criticcol_net.parameters(), args.collr)
+        self.criticcol_optimizer = optim.Adam(self.criticcol_net.parameters(), args.collr)
         # hyperparameters in training
         # The number of the placed macros
         self.placed_num_macro = args.pnm
@@ -225,11 +224,7 @@ class PPO_col():
         self.benchmark = args.design_name
         self.exp_id = args.exp_id
         self.k_col = args.k_col
-        # buffer capacity = 10 * placed_num_macro
-        if self.placed_num_macro:
-            self.buffer_capacity = 10 * (self.placed_num_macro)
-        else:
-            self.buffer_capacity = 5120
+        self.buffer_capacity = 10 * (self.placed_num_macro)
     
     def load_param(self, path):
         checkpoint = torch.load(path, map_location=torch.device(device))
@@ -238,13 +233,11 @@ class PPO_col():
     
     # Selet the col id (without the overflow and X-displacement)
     def select_action(self, state):
-        # pdb.set_trace()
         state = torch.from_numpy(state).float().to(device).unsqueeze(0)
         with torch.no_grad():
             action_probs, _= self.actorcol_net(state, self.soft_coefficient)
         dist = Categorical(action_probs)
         action = dist.sample()
-        #pdb.set_trace()
         action_log_prob = dist.log_prob(action)
         return action.item(), action_log_prob.item()
     
@@ -253,7 +246,7 @@ class PPO_col():
         with torch.no_grad():
             action_probs,_ = self.actorcol_net(state, self.soft_coefficient)
         dist = Categorical(action_probs)
-        # k = 3  # k = 3
+        # k = 3
         # take the k-largest
         values, indices = dist.probs.topk(self.k_col, dim=1)
         return indices
@@ -271,12 +264,11 @@ class PPO_col():
         # -13166 reward
         benchmark_save_model_path = os.path.join("save_models_col", self.benchmark, self.exp_id)
         if not os.path.exists(benchmark_save_model_path):
-            os.mkdir(benchmark_save_model_path)
+            os.makedirs(benchmark_save_model_path)
         
 
         torch.save({"actorcol_net_dict": self.actorcol_net.state_dict(),
                     "criticcol_net_dict": self.criticcol_net.state_dict()},
-
                     os.path.join(benchmark_save_model_path, "net_dict-{}-{}-".format(self.benchmark, self.placed_num_macro)+strftime+"{}".format(int(running_reward))+".pkl"))        
 
     def store_transition(self, transition):
@@ -316,7 +308,6 @@ class PPO_col():
                 
                 # action probability
                 action_probs, _ = self.actorcol_net(state[index].to(device), self.soft_coefficient)
-                #pdb.set_trace()
                 dist = Categorical(action_probs)
                 action_log_prob = dist.log_prob(action[index].squeeze())
                 # According to the probability to update
@@ -330,11 +321,7 @@ class PPO_col():
                 # actor loss < 0
                 L1 = ratio * advantage.squeeze() 
                 L2 = torch.clamp(ratio, 1-self.clip_param, 1+self.clip_param) * advantage.squeeze()
-                #pdb.set_trace()
                 actioncol_loss = -torch.min(L1, L2).mean() # MAX->MIN desent
-
-                # print(self.actor_optimizer.state_dict()['param_groups'][0]['lr'])
-                # print(self.critic_net_optimizer.state_dict()['param_groups'][0]['lr'])
 
                 self.actorcol_optimizer.zero_grad()
                 actioncol_loss.backward()
@@ -343,10 +330,10 @@ class PPO_col():
                 self.actorcol_optimizer.step()
 
                 valuecol_loss = F.smooth_l1_loss(self.criticcol_net(state[index].to(device)), target_v)
-                self.criticcol_net_optimizer.zero_grad()
+                self.criticcol_optimizer.zero_grad()
                 valuecol_loss.backward()
                 nn.utils.clip_grad_norm_(self.criticcol_net.parameters(), self.max_grad_norm)
-                self.criticcol_net_optimizer.step()
+                self.criticcol_optimizer.step()
 
                 writer.add_scalar('action_loss', actioncol_loss, self.training_step)
                 writer.add_scalar('value_loss', valuecol_loss, self.training_step)
@@ -359,7 +346,7 @@ class PPO_col():
 
 def train_model(args, logger):
     dataset = load_dataset(args, logger)
-    # if args.pnm > dataset.num_macro:
+
     # the number of the placement units
     args.pnm = dataset.num_macro
     placed_num_macro = args.pnm
@@ -372,6 +359,7 @@ def train_model(args, logger):
     envcol = gym.make("place_colenv-v1", database = dataset, grid_col = dataset.grid_width, grid_col_capacity=dataset.gridcolnumsites, placed_num_macro = placed_num_macro)
     env = gym.make("place_env-v0", database = dataset, grid_width = dataset.grid_width, grid_height = dataset.grid_height, placed_num_macro = placed_num_macro)
 
+    # Setup the model to determine the specific position
     TrainingRecord = namedtuple('TrainRecord', ['episode', 'reward'])
     agent = PPO(args, dataset.grid_width, dataset.grid_height)
     load_model_path = args.checkpoint_path
@@ -390,56 +378,57 @@ def train_model(args, logger):
     training_records = []
 
     if not args.is_test:
+        # logs
         log_file_name = "logs/log_"+ args.design_name + "_" + strftime + "_seed_"+ str(args.seed) + "_pnm_" + str(args.pnm) + ".csv"
-        # logs_col and logs
+        if not os.path.exists("logs"):
+            os.mkdir("logs")
+
+        # logs_col
         if args.traincol:
             logcol_file_name = "logs_col/log_"+ args.design_name + "_" + strftime + "_seed_"+ str(args.seed) + "_pnm_" + str(args.pnm) + ".csv"
             if not os.path.exists("logs_col"):
                 os.mkdir("logs_col")
-            fwrite_col = open(logcol_file_name, "w")  
-        if not os.path.exists("logs"):
-            os.mkdir("logs")
+            fwrite_col = open(logcol_file_name, "w") 
+
         # output the results
         fwrite = open(log_file_name, "w")
         # The largest reward
         best_reward = running_reward
-    
-    # epochs for the training of the first model
-    warm_up_epochs = args.warm_up_epochs
-    total_epochs = args.epochs
-
-    if args.is_test:
+        # epochs for the training of the first model
+        coltrain_epochs = args.coltrain_epochs
+        total_epochs = args.epochs
+    else:
         torch.inference_mode()
-        total_epochs = 1
+        coltrain_epochs = 0
+        total_epochs = 1      
     
-    #pdb.set_trace()
+    # start_all
+    start_all = time.time()
 
     # epochs for training the column prediction network
     print("========Phase 1 Training=========")
-    col2cascadeid = {} # column to cascade id
+    # col2cascadeid = {} # column to cascade id
 
     if args.traincol:
-        start = time.time()
-        for i_epoch in range(warm_up_epochs):
+        # start time
+        start_stage1 = time.time()
+        for i_epoch in range(coltrain_epochs):
             score = 0
             raw_score = 0
             state = envcol.reset()
-            # pdb.set_trace()
             done = False
             macro_cnt = 0
             state_final = None
             while done is False:
                 state_tmp = state.copy()
                 action, action_log_prob = agent_col.select_action(state_tmp)
-                # macro = dataset.macros[dataset.nodeidlist[macro_cnt]]
-                # print(macro.name, action)
-                # pdb.set_trace()
                 next_state, reward, done, info = envcol.step(action)
                 # to see the calculation of the reward
                 # update the action and transition
                 reward_intrinsic = 0
                 if not args.is_test:
                     trans = Transition_col(state_tmp, action, reward / 200.0, action_log_prob, next_state, reward_intrinsic)
+                
                 # agent_col.store_transition
                 if not args.is_test and agent_col.store_transition(trans):
                     assert done == True
@@ -448,21 +437,11 @@ def train_model(args, logger):
                 raw_score += info["raw_reward"]
                 state = next_state
                 cascade_id = dataset.nodeidlist[macro_cnt]
-                # col2cascadeid (action)
-                if action not in col2cascadeid.keys():
-                    col2cascadeid[action] = [cascade_id]
-                else:
-                    col2cascadeid[action].append(cascade_id)
             
                 macro_cnt += 1
 
                 if done:
                     state_final = state_tmp
-            
-            #pdb.set_trace()
-            
-            end = time.time()
-            print("Endtime of stage1", end)
 
             if i_epoch == 0:
                 running_reward = score
@@ -474,24 +453,32 @@ def train_model(args, logger):
 
             if not args.is_test and i_epoch % 1 ==0:
                 print("Epoch {}, Moving average score is: {:.2f} ".format(i_epoch, running_reward))
-                fwrite_col.write("{},{},{:.2f},{}\n".format(i_epoch, score, running_reward, agent_col.training_step))
+                end_stage1 = time.time()
+                time_stage1 = (end_stage1 - start_stage1) * 1.0 / 60.0
+                fwrite_col.write("{},{},{:.2f},{},{:.2f}\n".format(i_epoch, score, running_reward, agent_col.training_step, time_stage1))
                 fwrite_col.flush()
+
+        end_stage1 = time.time()
+        time_stage1 = (end_stage1 - start_stage1) * 1.0 / 60.0
+        print("Endtime of stage1: {:.2f} mins".format(time_stage1))
     
         
     print("========Phase 2 Training=========")
     # 10000 epochs
-    start = time.time()
+    start_stage2 = time.time()
     for i_epoch in range(total_epochs):
+        start = time.time()
         score = 0
         raw_score = 0
-        # start time for the macro placement
-        # The same images?
+
         state = env.reset()
         if args.colfirst:
             state_col = envcol.reset()
+
         done = False
         macro_cnt = 0
         xscore = 0
+
         while done is False:
             state_tmp = state.copy()
             # Obtain the top-3 columns for the training
@@ -504,11 +491,17 @@ def train_model(args, logger):
                 # all the columns could be selected
                 column_ids = np.array([list(range(0, dataset.grid_width))])
                 column_ids = torch.Tensor(column_ids).to(device)
+                # 50 - 100 epochs : enlarge the learning rate; > 100 epochs : learning rate decrease
                 if args.colfirst and (i_epoch < 100):
                     is_adjust_lr = True
-            
+            # select the action
+            start_inf = time.time()
             action, action_log_prob = agent.select_action(state, column_ids[0])
+            end_inf = time.time()
+
+            start_env = time.time()
             next_state, reward, done, info = env.step(action)
+            end_env = time.time()
 
             if args.colfirst:
                 action_col = round(action // dataset.grid_height)
@@ -517,14 +510,17 @@ def train_model(args, logger):
             # to see the calculation of the reward
             # update the action
             reward_intrinsic = 0
+
             # Why is the reward devided by 200?
             if not args.is_test:
                 trans = Transition(state_tmp, action, reward / 200.0, action_log_prob, next_state, reward_intrinsic, column_ids[0].cpu().numpy())
-            # pdb.set_trace()
+
             # store
+            start_updatemodel = time.time()
             if not args.is_test and agent.store_transition(trans):                
                 assert done == True
                 agent.update(is_adjust_lr)
+            end_updatemodel = time.time()
             
             # scores
             score += reward
@@ -538,6 +534,8 @@ def train_model(args, logger):
             x = round(action // dataset.grid_height)
             real_x = dataset.gridcolid2colid[x]
             y = round(action % dataset.grid_height)
+
+            # cascade id
             cascade_id = dataset.nodeidlist[macro_cnt]
             macro = dataset.macros[cascade_id]
             submacro_cnt = 0
@@ -555,8 +553,13 @@ def train_model(args, logger):
                 submacro_cnt += 1
             macro_cnt += 1
 
+            # print("Model inference time = {}s".format(end_inf - start_inf))
+            # print("Env Update time = {}s".format(end_env - start_env))
+            # print("Model Update time = {}s".format(end_updatemodel - start_updatemodel))
+
         # end time for the macro placement
         end = time.time()
+        print("time = {}s".format(end-start))
 
         if i_epoch == 0:
             running_reward = score
@@ -604,6 +607,7 @@ def train_model(args, logger):
                 print("The macro placement is legal!!")
             else:
                 print("The macro placement is not legal!!")
+            
             print("time = {}s".format(end-start))
             benchmark = args.design_name
             # save_placement(pl_file_path, env.node_pos, env.ratio)
@@ -635,9 +639,12 @@ def train_model(args, logger):
         
         training_records.append(TrainingRecord(i_epoch, running_reward))
         if not args.is_test and i_epoch % 1 ==0:
+            end_stage2 = time.time()
+            time_stage2 = (end_stage2 - start_stage2) * 1.0 / 60.0
             print("Epoch {}, Moving average score is: {:.2f} ".format(i_epoch, running_reward))
-            fwrite.write("{},{},{:.2f},{}\n".format(i_epoch, score, running_reward, agent.training_step))
+            fwrite.write("{},{},{:.2f},{},{:.2f} \n".format(i_epoch, score, running_reward, agent.training_step, time_stage2))
             fwrite.flush()
+        
         writer.add_scalar('reward', running_reward, i_epoch)
         if running_reward > -100:
             print("Solved! Moving average score is now {}!".format(running_reward))
@@ -651,6 +658,15 @@ def train_model(args, logger):
         #             os.makedirs(gl_folder)
         #         env.write_gl_file("./gl/{}{}.gl".format(strftime, int(score)))
         #     fig, ax1 = plt.subplots()
+
+    end_stage2 = time.time()
+    end_all = time.time()
+
+    time_stage2 = (end_stage2 - start_stage2) * 1.0 / 60.0
+    time_all = (end_all - start_all) * 1.0 / 60.0
+
+    print("Stage 2 training time: {:.2f} mins".format(time_stage2))
+    print("Total training time: {:.2f} mins".format(time_all))
 
 
 

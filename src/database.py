@@ -34,6 +34,7 @@ class Dataset:
         self.ports = [] #ports col, the list variable
         self.nodeswithRegionConstr = [] #nodes col with regional constraint
         self.clknets = [] #clk_nets col, the list variable
+
         self.highdegreenets = [] #high degree nets col, the list variable
         self.sites = [] #The sites that could place the nodes
         self.BRAMsites = [] #The sites that could place the BRAMs
@@ -172,6 +173,7 @@ class Dataset:
 
     def ExtractPlacementNets(self):
         # Simply consider the number of the macros
+        # pdb.set_trace()
         for net in self.nets:
             for pinid in net.macropins:
                 cascadeid = self.nodes[pinid].cascade_id
@@ -183,14 +185,21 @@ class Dataset:
             if len(net.cascademacropins) >= 1 and (len(net.cascademacropins) + len(net.IOpins)) > 1:
                 self.placementnets.append(net)
                 self.netid2placementnetid[net.id] = len(self.placementnets) - 1
+                # pinId
+                for pinid in net.macropins:
+                    self.nodes[pinid].placementnetIds.append(len(self.placementnets) - 1)
         
+        # Update the id of the placementnets
+        for placementnetid in range(len(self.placementnets)):
+            self.placementnets[placementnetid].id = placementnetid
+
         # Append the placementnet id into the set of connected nets of macros
         for placementnet in self.placementnets:
             for cascadeid in placementnet.cascademacropins:
                 self.macros[cascadeid].connectedPlacementNets.append(placementnet.id)
                 self.macros[cascadeid].degree += (len(placementnet.cascademacropins) - 1)
                 self.macros[cascadeid].degree_IO += (len(placementnet.IOpins))
-    
+   
     # Read the design.lib file                     
     def readCellLibs(self):
         with open(self.params["lib"], "r") as f_lib:

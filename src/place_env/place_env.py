@@ -9,6 +9,9 @@ import matplotlib.patches as patches
 import time
 import pdb
 import math
+# multi-processing
+import multiprocessing
+from utils import *
 
 
 class PlaceColEnv(gym.Env):
@@ -21,6 +24,7 @@ class PlaceColEnv(gym.Env):
 
         # the number of the cols in the grid graph
         self.grid_col = grid_col
+        
         self.sitemap_height = database.sitemap_height
         self.sitemap_width = database.sitemap_width
 
@@ -30,6 +34,8 @@ class PlaceColEnv(gym.Env):
 
         self.num_macro = database.num_macro
         self.num_net = database.num_placementnets
+
+        # node id list
         self.nodeidlist = database.nodeidlist
 
         self.action_space = spaces.Discrete(self.grid_col)
@@ -48,7 +54,7 @@ class PlaceColEnv(gym.Env):
     def reset(self):
         self.num_macro_placed = 0
         num_macro = self.num_macro
-        # Use the one dimensional array to place all the cells
+        # Use the one dimensional array to place all the cells (number and proportion)
         arr = np.zeros(self.grid_col)
         arr_prop = np.zeros(self.grid_col)
 
@@ -105,8 +111,8 @@ class PlaceColEnv(gym.Env):
         macrotype_2 = self.database.macros[self.nodeidlist[self.num_macro_placed + 1]].macrotype
         mask_2 = self.get_mask(arr, next_y_2, macrotype_2)
 
-        for net in self.database.placementnets:
-            self.net_placed_set[net.id] = set()
+        for placementnet in self.database.placementnets:
+            self.net_placed_set[placementnet.id] = set()
         
         self.state = np.concatenate((np.array([self.num_macro_placed]), arr_prop, net_img, mask, net_img_2, 
             mask_2, np.array([next_y / numsitescol])), axis = 0)
@@ -126,26 +132,41 @@ class PlaceColEnv(gym.Env):
         
         macro = self.database.macros[next_macro_id]
 
+        # grid_col
+        horizontal_array = np.array([i for i in range(self.grid_col)])
+        horizontal_real_col = []
+        for i in range(self.grid_col):
+            horizontal_real_col.append(self.database.gridcolid2colid[i])
+        horizontal_real_array = np.array(horizontal_real_col)
+
+        # number of nodes
         for node in macro.Macronodecol:
-            for netid in node.netIds:
-                if netid not in self.database.netid2placementnetid.keys():
-                    continue
-                placementnetid = self.database.netid2placementnetid[netid]
+            for placementnetid in node.placementnetIds:
                 if placementnetid in self.net_min_max_ord:
                     start_x = self.net_min_max_ord[placementnetid]['min_x']
                     start_x_grid = self.database.colid2gridcolid[start_x]
 
                     end_x = self.net_min_max_ord[placementnetid]['max_x']
                     end_x_grid = self.database.colid2gridcolid[end_x]
-                    weight = 1.0
 
-                    for i in range(0, start_x_grid):
-                        real_x = self.database.gridcolid2colid[i]
-                        net_img[i] += (start_x - real_x)*weight
-                    
-                    for i in range(end_x_grid+1, self.grid_col):
-                        real_x = self.database.gridcolid2colid[i]
-                        net_img[i] += (real_x - end_x)*weight
+                    weight = self.database.placementnets[placementnetid].weight
+
+                    # horizontal array
+                    horizontal_array_left = start_x_grid - horizontal_array
+                    horizontal_real_array_left = start_x - horizontal_real_array
+                    horizontal_array_left = np.where(horizontal_array_left > 0, 1, 0)
+                    horizontal_array_left = horizontal_array_left * horizontal_real_array_left
+
+
+                    net_img += horizontal_array_left*weight
+
+                    horizontal_array_right = horizontal_array - end_x_grid
+                    horizontal_real_array_right = horizontal_real_array - end_x
+                    horizontal_array_right = np.where(horizontal_array_right > 0, 1, 0)
+                    horizontal_array_right = horizontal_array_right * horizontal_real_array_right
+
+
+                    net_img += horizontal_array_right*weight                  
         
         return net_img
     
@@ -173,15 +194,13 @@ class PlaceColEnv(gym.Env):
         self.node_pos[cascade_id] = action
 
         # the connected nets
-        net_col = []
+        placementnet_col = []
+        start_s1 = time.time()
         for node in macro.Macronodecol:
-            for netid in node.netIds:
-                if netid not in self.net_placed_set:
-                    continue
-                if netid not in net_col:
-                    net_col.append(netid)
-                self.net_placed_set[netid].add(node.id)
-                placementnetid = self.database.netid2placementnetid[netid]
+            for placementnetid in node.placementnetIds:
+                if placementnetid not in placementnet_col:
+                    placementnet_col.append(placementnetid)
+                self.net_placed_set[placementnetid].add(node.id)
                 pin_x = action
                 pin_x_real = self.database.gridcolid2colid[pin_x]
 
@@ -207,14 +226,18 @@ class PlaceColEnv(gym.Env):
                     self.net_fea[placementnetid][0] = pin_x_real / self.sitemap_width
 
                     reward += 0
-        
+        end_s1 = time.time()
+
+
         self.num_macro_placed += 1
         net_img = np.zeros(self.grid_col)
         net_img_2 = np.zeros(self.grid_col)
 
         if self.num_macro_placed < self.placed_num_macro:
+            start_s2 = time.time()
             net_img = self.get_net_img()
             net_img_2 = self.get_net_img(is_next_next=True)
+            end_s2 = time.time()
             if net_img.max() > 0 or net_img_2.max() > 0:
                 net_img /= (max(net_img.max(), net_img_2.max())*1.0)
                 net_img_2 /= (max(net_img.max(), net_img_2.max()*1.0))
@@ -243,7 +266,6 @@ class PlaceColEnv(gym.Env):
         else:
             next_y = 0
 
-        #print(arr.shape, net_img.shape, mask.shape, net_img_2.shape, mask_2.shape, np.array([next_y/numsitescol]).shape)
         self.state = np.concatenate((np.array([self.num_macro_placed]), arr_prop, net_img,
                                     mask, net_img_2, mask_2, np.array([next_y/numsitescol])), axis=0)
         return self.state, reward, done, {"raw_reward": reward, "net_img":net_img, "mask":mask}
@@ -306,7 +328,7 @@ class PlaceEnv(gym.Env):
 
         self.placed_num_macro = placed_num_macro
 
-        
+    # reset the canvas 
     def reset (self):
         self.num_macro_placed = 0
         num_macro = self.num_macro
@@ -379,18 +401,20 @@ class PlaceEnv(gym.Env):
         mask_2 = self.get_mask(canvas, next_x_2, next_y_2, macrotype)
 
         # net_placed_set
-        for net in self.database.placementnets:
-            self.net_placed_set[net.id] = set()
+        for placementnet in self.database.placementnets:
+            self.net_placed_set[placementnet.id] = set()
         
         self.state = np.concatenate((np.array([self.num_macro_placed]), canvas.flatten(), net_img.flatten(), mask.flatten(), net_img_2.flatten(),
             mask_2.flatten(), np.array([next_x / self.sitemap_width, next_y / self.sitemap_height])), axis = 0)
 
         return self.state
-    
+
     # get the wire mask (net image calculation)
     def get_net_img(self, is_next_next = False):
-
-        net_img = np.zeros ((self.grid_width, self.grid_height))
+        
+        # net_img
+        # start_time_1 = time.time()
+        self.net_img = np.zeros((self.grid_width, self.grid_height))
 
         # next_macro_id
         if not is_next_next:
@@ -398,57 +422,99 @@ class PlaceEnv(gym.Env):
         elif self.num_macro_placed + 1 < len(self.nodeidlist):
             next_macro_id = self.nodeidlist[self.num_macro_placed + 1]
         else:
-            return net_img
+            return self.net_img
 
-        # timing complexity: num_macro * avg_connected_nets
-        macro  = self.database.macros[next_macro_id]
+        # timing complexity: num_nodes * avg_connected_nets
+        macro = self.database.macros[next_macro_id]
         
         # All the nodes in the cascaded macros
+        # update the boundary
+
+        nodenetpaircol = []
         cnt = 0
+
+        # get the bounding box
         for node in macro.Macronodecol:
-            net_cnt = 0
-            for netid in node.netIds:
-                # net is the placement net
-                if netid not in self.database.netid2placementnetid.keys():
-                    continue
-                placementnetid = self.database.netid2placementnetid[netid]
+            for placementnetid in node.placementnetIds:
                 # Whether there are some problems concerning the cell order
                 if placementnetid in self.net_min_max_ord:
-                    # print(net_img)
-                    delta_pin_x = 0   # the pin offset of the macro is 0
-                    delta_pin_y = cnt * macro.height / macro.num_row  # delta_pin_y
-                    # net_min_max_ord: the boundary of the nets (real coordinates)
-                    # <macro size, pin offset>
-                    start_x = self.net_min_max_ord[placementnetid]["min_x"] - delta_pin_x
-                    start_x_grid = self.database.colid2gridcolid[start_x]
-
-                    end_x = self.net_min_max_ord[placementnetid]['max_x'] - delta_pin_x
-                    end_x_grid = self.database.colid2gridcolid[end_x]
-
-                    start_y = int(self.net_min_max_ord[placementnetid]['min_y'] - delta_pin_y)
-                    end_y = int(self.net_min_max_ord[placementnetid]['max_y'] - delta_pin_y)
-                    
-                    start_x = min(start_x, self.database.sitemap_width)
-                    start_x_grid = min(start_x_grid, self.database.grid_width)
-                    start_y = min(start_y, self.database.sitemap_width)
-
-                    weight = self.database.nets[netid].weight
-
-                    for i in range(0, start_x_grid):
-                        real_x = self.database.gridcolid2colid[i]
-                        net_img[i, :] += (start_x - real_x) * weight
-
-                    for i in range(end_x_grid+1, self.grid_width):
-                        real_x = self.database.gridcolid2colid[i]
-                        net_img[i, :] +=  (real_x - end_x) * weight
-                    
-                    for j in range(0, start_y):
-                        net_img[:, j] += (start_y - j) * weight
-
-                    for j in range(end_y+1, self.grid_height):
-                        net_img[:, j] += (j - end_y) * weight
+                    nodenetpaircol.append((cnt, placementnetid))
             cnt += 1
-        return net_img
+
+        # initialize the horizontal and vertical arrays
+        horizontal_array = np.array([i for i in range(self.grid_width)])
+        horizontal_real_col = []
+        for i in range(self.grid_width):
+            horizontal_real_col.append(self.database.gridcolid2colid[i])
+        horizontal_real_array = np.array(horizontal_real_col)
+
+        # reshape the horizontal_array and horizontal_real_array
+        horizontal_array = horizontal_array.reshape(-1, 1)
+        horizontal_real_array = horizontal_real_array.reshape(-1, 1)
+        vertical_array = np.array([i for i in range(self.grid_height)])
+
+        self.calnetmask_sub(macro, nodenetpaircol, horizontal_array, horizontal_real_array, vertical_array)
+    
+        return self.net_img
+    
+    def calnetmask_sub(self, macro, nodenetpairsub, horizontal_array, horizontal_real_array, vertical_array):
+        # (cnt, placementnetid)
+        for cnt, placementnetid in nodenetpairsub:
+            if placementnetid in self.net_min_max_ord:
+                weight = self.database.placementnets[placementnetid].weight
+                delta_pin_x = 0
+                delta_pin_y = cnt * macro.height / macro.num_row
+                start_x = self.net_min_max_ord[placementnetid]["min_x"] - delta_pin_x
+                start_x_grid = self.database.colid2gridcolid[start_x]
+                end_x = self.net_min_max_ord[placementnetid]["max_x"] - delta_pin_x
+                end_x_grid = self.database.colid2gridcolid[end_x]
+
+                start_y = int(self.net_min_max_ord[placementnetid]["min_y"] - delta_pin_y)
+                end_y = int(self.net_min_max_ord[placementnetid]["max_y"] - delta_pin_y)
+
+                start_x = min(max(start_x, 0), self.database.sitemap_width)
+                start_x_grid = min(max(start_x_grid, 0), self.database.grid_width)
+                start_y = min(max(start_y, 0), self.database.sitemap_height)
+
+                # if we use the numpy matrix
+                # update x-direction (left)
+                horizontal_array_left = start_x_grid - horizontal_array
+                horizontal_real_array_left = start_x - horizontal_real_array
+                horizontal_array_left = np.where(horizontal_array_left > 0, 1, 0)
+                horizontal_array_left = horizontal_array_left * horizontal_real_array_left
+                horizontal_array_left = horizontal_array_left.reshape(-1, 1)
+                horizontal_array_left_m = np.repeat(horizontal_array_left, self.database.grid_height, 1)*weight
+
+                self.net_img += horizontal_array_left_m
+
+                # update x-direction (right)
+                horizontal_array_right = horizontal_array - end_x_grid
+                horizontal_real_array_right = horizontal_real_array - end_x
+                horizontal_array_right = np.where(horizontal_array_right > 0, 1, 0)
+                horizontal_array_right = horizontal_array_right * horizontal_real_array_right
+                horizontal_array_right = horizontal_array_right.reshape(-1, 1)
+                horizontal_array_right_m = np.repeat(horizontal_array_right, self.database.grid_height, 1)*weight
+
+                self.net_img += horizontal_array_right_m
+
+                # update y-direction (down)            
+                vertical_array_down = start_y - vertical_array
+                vertical_array_down_mask = np.where(vertical_array_down > 0, 1, 0)
+                vertical_array_down = vertical_array_down * vertical_array_down_mask
+                vertical_array_down = vertical_array_down.reshape(1, -1)
+                vertical_array_down_m = np.repeat(vertical_array_down, self.database.grid_width, 0)*weight
+
+                self.net_img += vertical_array_down_m
+
+                # update y-direction (up)
+                vertical_array_up = vertical_array - end_y
+                vertical_array_up_mask = np.where(vertical_array_up > 0, 1, 0)
+                vertical_array_up = vertical_array_up * vertical_array_up_mask
+                vertical_array_up = vertical_array_up.reshape(1, -1)
+                vertical_array_up_m = np.repeat(vertical_array_up, self.database.grid_width, 0)*weight
+
+                self.net_img += vertical_array_up_m
+
 
     def step(self, action):
 
@@ -488,37 +554,23 @@ class PlaceEnv(gym.Env):
         # (x, y, size_x, size_y): location (x,y), macro size: (size_x, size_y)
         self.node_pos[cascade_id] = (x, y, size_x, size_y)
         
-        # Print the macro location
-        # print(macro.name, self.database.gridcolid2colid[x], y)
-        # print(macro.name, "Mask Non Zero: ", np.sum(np.where(mask == 0, 1, 0)))
-        # if "BRAM" in macro.macrotype or "RAMB" in macro.macrotype:
-        #     if x not in self.database.BRAMgridcols or y not in self.database.BRAMgridrows:
-        #         print("BRAM wrong coordinates: ", macro.name, self.database.gridcolid2colid[x], y)
-        # elif "DSP" in macro.macrotype:
-        #     # pdb.set_trace()
-        #     print("DSP coordinates: ", macro.name, self.database.gridcolid2colid[x], y)           
-        #     if x not in self.database.DSPgridcols or y not in self.database.DSPgridrows:
-        #         print("DSP wrong coordinates: ", macro.name, self.database.gridcolid2colid[x], y)
-
         # node.id
         cnt = 0
         cnt_pdb = 0
         
         # print(len(self.net_min_max_ord))
         # pdb.set_trace()
-        net_col = []
+        placementnet_col = []
 
+        start_s1 = time.time()
         for node in macro.Macronodecol:
-            for netid in node.netIds:
+            for placementnetid in node.placementnetIds:
                 # If the net is not the placement net (the netid); If the net is the placement net
-                if netid not in self.net_placed_set:
-                    continue
-                
-                if netid not in net_col:
-                    net_col.append(netid)
+                if placementnetid not in placementnet_col:
+                    placementnet_col.append(placementnetid)
 
                 # Add the macros to the net_placed_set
-                self.net_placed_set[netid].add(node.id)
+                self.net_placed_set[placementnetid].add(node.id)
 
                 pin_x = x
                 pin_x_real = self.database.gridcolid2colid[pin_x] # the real pin x index
@@ -534,7 +586,6 @@ class PlaceEnv(gym.Env):
                     end_cell_y = end_cell_y_lower
 
                 pin_y =  end_cell_y  # we need to ensure the y is 5 times
-                placementnetid = self.database.netid2placementnetid[netid]
                 
                 if placementnetid in self.net_min_max_ord:
                     start_x = self.net_min_max_ord[placementnetid]['min_x']
@@ -575,18 +626,18 @@ class PlaceEnv(gym.Env):
                     x_reward += 0
                     cnt_pdb += 1
             cnt += 1
-
-        # print(cnt_pdb)
-        # print(len(net_col))
-        # pdb.set_trace()
+        
+        end_s1 = time.time()
 
         self.num_macro_placed += 1
         net_img = np.zeros((self.grid_width, self.grid_height))
         net_img_2 = np.zeros((self.grid_width, self.grid_height))
 
         if self.num_macro_placed < self.placed_num_macro:
+            start_s2 = time.time()
             net_img = self.get_net_img()
             net_img_2 = self.get_net_img(is_next_next = True)
+            end_s2 = time.time()
             if net_img.max() > 0 or net_img_2.max() > 0:
                 net_img /= (max(net_img.max(), net_img_2.max())*1.0)
                 net_img_2 /= (max(net_img.max(), net_img_2.max())*1.0)
@@ -599,6 +650,8 @@ class PlaceEnv(gym.Env):
 
         mask = np.ones((self.grid_width, self.grid_height))
         mask_2 = np.ones((self.grid_width, self.grid_height))
+
+        start_s3 = time.time()
         if not done:
             next_x = 1
             next_y = self.database.macros[self.nodeidlist[self.num_macro_placed]].height
@@ -612,7 +665,9 @@ class PlaceEnv(gym.Env):
         else:
             next_x = 0
             next_y = 0
-        
+        end_s3 = time.time()
+        # print("s3 runtime (s): ", end_s3 - start_s3)
+    
         self.state = np.concatenate((np.array([self.num_macro_placed]), canvas.flatten(),
             net_img.flatten(), mask.flatten(), net_img_2.flatten(), mask_2.flatten(),
             np.array([next_x / self.sitemap_width, next_y/self.sitemap_height])), axis = 0)
@@ -639,7 +694,6 @@ class PlaceEnv(gym.Env):
             if rowid not in selectrow:
                 mask[:, rowid] = 1
 
-        # print("Mask Non Zero Stage 1: ", np.sum(np.where(mask == 0, 1, 0)))
 
         # No overlap with the placed macros
         cnt = 0
@@ -670,13 +724,7 @@ class PlaceEnv(gym.Env):
             # print(self.database.macros[nodeid].name, startx, starty, endx, endy)
             mask[startx: endx + 1, starty : endy + 1] = 1
 
-            # if cnt == len(self.node_pos) - 1:
-            #     print(startx, endx, starty, endy, self.node_pos[nodeid][0], self.node_pos[nodeid][1], self.node_pos[nodeid][2], self.node_pos[nodeid][3])
-            #     print(next_x, next_y)
-
             cnt += 1
-
-        # print("Mask Non Zero Stage 2: ", np.sum(np.where(mask == 0, 1, 0)))
 
         # Not exceed the boundary
 
@@ -692,7 +740,6 @@ class PlaceEnv(gym.Env):
 
         mask[:, boundary_y + 1:] = 1
 
-        # print("Mask Non Zero Stage 3: ", np.sum(np.where(mask == 0, 1, 0)))
 
         return mask
         

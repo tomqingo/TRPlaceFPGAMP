@@ -22,13 +22,16 @@ class Net:
         self.pin_num = self.pin_num + 1
 
     def addMacroPin(self, nodeid):
-        self.macropins.append(nodeid)
+        if nodeid not in self.macropins:
+            self.macropins.append(nodeid)
     
     def addCascadeMacroPin(self, cascadeid):
-        self.cascademacropins.appennd(cascade_id)
+        if cascade_id not in self.cascademacropins:
+            self.cascademacropins.append(cascade_id)
 
     def addIOPin(self, nodeid):
-        self.IOpins.append(nodeid)
+        if nodeid not in self.IOpins:
+            self.IOpins.append(nodeid)
     
     def getclkPinNum(self):
         return self.clkpin_num

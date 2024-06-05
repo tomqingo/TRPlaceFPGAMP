@@ -28,6 +28,10 @@ class Node:
         self.netIds = []
         self.outnetIds = []
         self.innetIds = []
+
+        # placementnet information
+        self.placementnetIds = []
+
         # whether the node is placed
         self.isPlace = False
         # site (locX, locY)
