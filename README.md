@@ -108,14 +108,14 @@ If we want to test the two-stage online RL model after training on Design_2
 $ python3 main.py --is_training True --is_test True --epoch 1 --colfirst True --traincol False --design_name Design_2 --checkpoint_path save_models/Design_2/net_dict-Design_2-2320-2024-04-01-03-53-38-2788503.pkl --checkpoint_path_col save_models/Design_2/net_dict_col-Design_2-2320-2024-04-01-03-53-38-2788503.pkl
 ~~~
 
-### Dependencies
+# Dependencies
 
 * Python (version 3)
 * Pandas>=1.12.0
 * Numpy>=1.19.2
 * Gym=0.18.0
 
-### References
+# References
 If you would like to use our two-stage RL-based FPGA macro placer, please cite our published FPL paper as:
 ~~~
 @inproceedings{luo2025trplacefpga,
