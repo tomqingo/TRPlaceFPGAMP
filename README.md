@@ -63,7 +63,7 @@ result: the macro placement results, placement error and the log file
 
 preprocessing: some preprocessing tcl and python file (like extract the macro and convert the macro placement solution)
 
-DiffMP: diffusion model for macro placement
+DiffMP: diffusion model for macro placement (just trial, not usable)
 
 src: source code
 - db  Some data structures used to represent the nodes, nets, macros, and sitemaps.
