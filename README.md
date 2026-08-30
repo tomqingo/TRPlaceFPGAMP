@@ -4,7 +4,9 @@
 
 Reinforcement learning (RL)-based macro placement has garnered significant interest in both the fields of artificial intelligence and electronic design automation (EDA), due to its excellent potential for achieving better performance, power and area optimization compared to analytical methods. However, existing techniques are restricted in the ASIC and ignore the other hardware architectures like FPGA. Neglecting the intrinsic characters of FPGA structures, conventional RL-based methods for ASICs may result in a large exploration space and low sample efficiency. In this work, we propose TRPlaceFPGA-MP, a two-stage RL-based macro placement framework for Ultrascale FPGAs. Leveraging the columnar architecture, we first train a tiny RL model to determine the candidate columns for each macro in the first stage. With the pruned searching space, a more sophisticated RL model is then trained in the second stage to determine the ultimate positions of the macros. Experimental results on the MLCAD2023 contest benchmark demonstrate that TRPlaceFPGA-MP still maintains superior placement performance compared with Vivado and DreamplaceFPGA-MP. Furthermore, it improves the convergence rate by 2.28x and accelerates the exploration process by 1.61x compared to the one-stage RL approach.
 
-![](comp.png)
+<p align="center">
+  <img src="comp.png">
+</p>
 
 # Input file format
 
